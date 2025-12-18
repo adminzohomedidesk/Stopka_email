@@ -1,8 +1,8 @@
 {
-    "banner_akcja_1.png": {
-      "link": "https://medideskedu.zohobackstage.eu/AMOZConnectWarszawa#/"
-    },
-    "banner_email_1.png": {
-      "link": "https://medidesk.pl"
-    }
+  "banner_akcja_1.png": {
+    "link": "https://adminzohomedidesk.github.io/Stopka_email/banner_akcja.html"
+  },
+  "banner_email_1.png": {
+    "link": "https://medidesk.pl"
   }
+}
