@@ -1114,6 +1114,9 @@
       const bannerUrl = selectedBannerUrl;
       const bannerLink = selectedBannerLink || "https://medidesk.pl"; // Link z konfiguracji lub domyślny
 
+      // Zdjęcie: jeśli brak URL z serwera, użyj base64 z canvasa (tryb ręczny)
+      const photoSrc = uploadedPhotoUrl || (isPhotoCropConfirmed ? getPhotoDataURLFromCanvas() : null) || '[WSTAW_ZDJECIE]';
+
       // Sanityzacja: usuń potencjalnie niebezpieczne znaki
       const sanitize = (str) => {
         return str.replace(/[<>\"'&]/g, '').trim();
@@ -1202,7 +1205,7 @@
       <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;">
         <tr>
           <td width="120" valign="top" style="width:120px; padding:0 10px 0 0; vertical-align: top;">
-            <img src="${uploadedPhotoUrl || '[WSTAW_ZDJECIE]'}" alt="${fullName}" width="109" height="109" style="display:block; width:109px; height:109px; border:1px solid #0074d7; border-radius:50%; object-fit:cover;" />
+            <img src="${photoSrc}" alt="${fullName}" width="109" height="109" style="display:block; width:109px; height:109px; border:1px solid #0074d7; border-radius:50%; object-fit:cover;" />
           </td>
           <td width="440" valign="top" style="width:440px; vertical-align: top;">
             <div style="margin:0; padding:0; font-size:14px; font-weight:700; color:#0074d7;">${fullName}</div>
@@ -1379,7 +1382,7 @@
                 <table class="rbcc" width="100%">
                     <tr>
                         <td class="col-left" width="130px" align="left" style="width: 130px; display: inline-block;">
-                            <img src="${uploadedPhotoUrl || '[WSTAW_ZDJECIE]'}" alt="${fullName}" style="border: 0 !important; max-width: 100% !important; height: 109px !important; width: 109px !important; border: 1px #0074d7 solid !important; -webkit-border-radius: 50%; -moz-border-radius: 50%; border-radius: 50% !important; object-fit: cover;" />
+                            <img src="${photoSrc}" alt="${fullName}" style="border: 0 !important; max-width: 100% !important; height: 109px !important; width: 109px !important; border: 1px #0074d7 solid !important; -webkit-border-radius: 50%; -moz-border-radius: 50%; border-radius: 50% !important; object-fit: cover;" />
             </td>
                         <td class="col-right" width="490px" align="left" style="color: #333333 !important; width: 490px; display: inline-block;">
                             <p style="margin: 0 0 2px 0 !important; padding: 0 !important; font-family: 'EuclidCircularB', Arial, sans-serif !important; font-size: 14px !important; font-weight: 700 !important; line-height: 18px !important; color: #0074d7 !important;">${fullName}</p>
