@@ -239,17 +239,17 @@
   <!-- Banner akcja -->
   <div class="banner-card">
     <h2>Banner akcji / wydarzenia</h2>
-    <p class="desc">Plik: <code>banner_akcja_1.png</code> — wyświetlany jako pierwszy w generatorze</p>
+    <p class="desc">Plik: <code>banner_akcja_1.png</code> — kliknięcie zawsze idzie przez <code>banner_akcja.html</code>, który przekierowuje do aktualnego wydarzenia</p>
     <div class="banner-preview-wrap">
       <div class="current-preview">
         <img id="previewAkcja" src="https://raw.githubusercontent.com/adminzohomedidesk/Stopka_email/main/banner_akcja_1.png" alt="Banner akcji" />
         <div class="label">Aktualny banner</div>
-        <div class="current-link">Aktualny link: <span id="currentLinkAkcja">—</span></div>
+        <div class="current-link">Przekierowuje do: <span id="currentRedirectAkcja">—</span></div>
       </div>
       <div class="banner-form">
         <div class="field">
-          <label>Nowy link po kliknięciu w banner</label>
-          <input type="url" id="linkAkcja" placeholder="https://..." />
+          <label>Nowy adres docelowy wydarzenia</label>
+          <input type="url" id="redirectAkcja" placeholder="https://..." />
         </div>
         <div class="field">
           <label>Nowy plik graficzny (opcjonalnie)</label>
@@ -334,19 +334,22 @@
   pinBtn.addEventListener("click", checkPin);
   pinInput.addEventListener("keydown", e => { if (e.key === "Enter") checkPin(); });
 
-  // Wczytaj aktualne linki z banner_config.json
   const loadConfig = async () => {
     try {
-      const r = await fetch(`${RAW_BASE}/banner_config.json?t=${Date.now()}`);
-      const cfg = await r.json();
-      const linkAkcja = cfg["banner_akcja_1.png"]?.link || "";
+      // Wczytaj aktualny redirect z banner_akcja.html
+      const akcjaHtml = await fetch(`${RAW_BASE}/banner_akcja.html?t=${Date.now()}`).then(r => r.text());
+      const match = akcjaHtml.match(/window\.location\.href\s*=\s*"([^"]+)"/);
+      const redirectUrl = match ? match[1] : "";
+      document.getElementById("redirectAkcja").value = redirectUrl;
+      document.getElementById("currentRedirectAkcja").textContent = redirectUrl || "—";
+
+      // Wczytaj link bannera standardowego z banner_config.json
+      const cfg = await fetch(`${RAW_BASE}/banner_config.json?t=${Date.now()}`).then(r => r.json());
       const linkEmail = cfg["banner_email_1.png"]?.link || "";
-      document.getElementById("linkAkcja").value = linkAkcja;
       document.getElementById("linkEmail").value = linkEmail;
-      document.getElementById("currentLinkAkcja").textContent = linkAkcja || "—";
       document.getElementById("currentLinkEmail").textContent = linkEmail || "—";
     } catch (e) {
-      console.warn("Nie udało się wczytać banner_config.json", e);
+      console.warn("Nie udało się wczytać konfiguracji", e);
     }
   };
 
@@ -451,8 +454,65 @@
     }
   };
 
-  document.getElementById("saveAkcja").addEventListener("click", () =>
-    saveBanner("banner_akcja_1.png", "linkAkcja", "fileAkcja", "statusAkcja", "previewAkcja"));
+  // Zapis bannera akcji — aktualizuje banner_akcja.html + opcjonalnie obraz
+  document.getElementById("saveAkcja").addEventListener("click", async () => {
+    const statusEl = document.getElementById("statusAkcja");
+    const saveBtn = document.getElementById("saveAkcja");
+    const redirectUrl = document.getElementById("redirectAkcja").value.trim();
+    const fileEl = document.getElementById("fileAkcja");
+
+    if (!redirectUrl) {
+      statusEl.className = "status-msg err";
+      statusEl.textContent = "Podaj adres docelowy wydarzenia.";
+      return;
+    }
+
+    statusEl.className = "status-msg loading";
+    statusEl.textContent = "Zapisuję...";
+    saveBtn.disabled = true;
+
+    try {
+      // 1. Zaktualizuj banner_akcja.html
+      const newHtml = `<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content="0; url=${redirectUrl}">
+  <script>window.location.href="${redirectUrl}";<\/script>
+  <title>Przekierowanie do wydarzenia Medidesk</title>
+</head>
+<body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f7fb;">
+  <h1 style="color: #00bfa5;">Przekierowanie...</h1>
+  <p>Zaraz zostaniesz przekierowany do strony wydarzenia.</p>
+  <p><a href="${redirectUrl}" style="color: #0097a7;">Kliknij tutaj, jeśli nie nastąpi automatyczne przekierowanie</a></p>
+</body>
+</html>`;
+      const htmlBase64 = btoa(unescape(encodeURIComponent(newHtml)));
+      const htmlSha = await getFileSha("banner_akcja.html");
+      const htmlOk = await pushFile("banner_akcja.html", htmlBase64, htmlSha, `Update redirect to ${redirectUrl}`);
+      if (!htmlOk) throw new Error("Błąd zapisu banner_akcja.html");
+      document.getElementById("currentRedirectAkcja").textContent = redirectUrl;
+
+      // 2. Podmień obraz (jeśli wybrany)
+      if (fileEl.files[0]) {
+        const imgBase64 = await fileToBase64(fileEl.files[0]);
+        const imgSha = await getFileSha("banner_akcja_1.png");
+        const imgOk = await pushFile("banner_akcja_1.png", imgBase64, imgSha, "Update banner_akcja_1.png");
+        if (!imgOk) throw new Error("Błąd zapisu pliku graficznego");
+        setTimeout(() => {
+          document.getElementById("previewAkcja").src = `${RAW_BASE}/banner_akcja_1.png?t=${Date.now()}`;
+        }, 3000);
+      }
+
+      statusEl.className = "status-msg ok";
+      statusEl.textContent = "✓ Zapisano! Zmiany aktywne natychmiast.";
+    } catch (err) {
+      statusEl.className = "status-msg err";
+      statusEl.textContent = "Błąd: " + err.message;
+    } finally {
+      saveBtn.disabled = false;
+    }
+  });
 
   document.getElementById("saveEmail").addEventListener("click", () =>
     saveBanner("banner_email_1.png", "linkEmail", "fileEmail", "statusEmail", "previewEmail"));
