@@ -209,6 +209,22 @@
     .btn-save:hover { background: #059669; }
     .btn-save:disabled { background: #6ee7b7; cursor: not-allowed; }
 
+    .btn-save.dirty {
+      animation: pulseGlow 1.5s ease-in-out infinite;
+      background: #f59e0b;
+    }
+    .btn-save.dirty:hover { background: #d97706; }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6); transform: scale(1); }
+      50% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); transform: scale(1.04); }
+    }
+    .dirty-hint {
+      font-size: 0.82rem;
+      color: #d97706;
+      font-weight: 600;
+      margin-left: 4px;
+    }
+
     .status-msg {
       font-size: 0.85rem;
       min-height: 20px;
@@ -343,12 +359,14 @@
       const redirectUrl = match ? match[1] : "";
       document.getElementById("redirectAkcja").value = redirectUrl;
       document.getElementById("currentRedirectAkcja").textContent = redirectUrl || "—";
+      initialValues.redirectAkcja = redirectUrl;
 
       // Wczytaj link bannera standardowego z banner_config.json
       const cfg = await fetch(`${RAW_BASE}/banner_config.json?t=${Date.now()}`).then(r => r.json());
       const linkEmail = cfg["banner_email_1.png"]?.link || "";
       document.getElementById("linkEmail").value = linkEmail;
       document.getElementById("currentLinkEmail").textContent = linkEmail || "—";
+      initialValues.linkEmail = linkEmail;
     } catch (e) {
       console.warn("Nie udało się wczytać konfiguracji", e);
     }
@@ -370,6 +388,37 @@
   };
   setupFilePreview("fileAkcja", "newPreviewAkcja", "newPreviewAkcjaWrap", "fileNameAkcja");
   setupFilePreview("fileEmail", "newPreviewEmail", "newPreviewEmailWrap", "fileNameEmail");
+
+  // Dirty state — podświetla przycisk Zapisz gdy jest niezapisana zmiana
+  const initialValues = { redirectAkcja: "", linkEmail: "" };
+  const markDirty = (saveBtnId) => {
+    const btn = document.getElementById(saveBtnId);
+    btn.classList.add("dirty");
+    if (!btn.querySelector(".dirty-hint")) {
+      const hint = document.createElement("span");
+      hint.className = "dirty-hint";
+      hint.textContent = "← niezapisane zmiany";
+      btn.parentElement.appendChild(hint);
+    }
+  };
+  const clearDirty = (saveBtnId) => {
+    const btn = document.getElementById(saveBtnId);
+    btn.classList.remove("dirty");
+    const hint = btn.parentElement.querySelector(".dirty-hint");
+    if (hint) hint.remove();
+  };
+
+  document.getElementById("redirectAkcja").addEventListener("input", function () {
+    if (this.value !== initialValues.redirectAkcja) markDirty("saveAkcja");
+    else clearDirty("saveAkcja");
+  });
+  document.getElementById("fileAkcja").addEventListener("change", () => markDirty("saveAkcja"));
+
+  document.getElementById("linkEmail").addEventListener("input", function () {
+    if (this.value !== initialValues.linkEmail) markDirty("saveEmail");
+    else clearDirty("saveEmail");
+  });
+  document.getElementById("fileEmail").addEventListener("change", () => markDirty("saveEmail"));
 
   // GitHub API helpers
   const getFileSha = async (path) => {
@@ -442,11 +491,23 @@
         setTimeout(() => {
           document.getElementById(previewCurrentId).src =
             `${RAW_BASE}/${bannerFile}?t=${Date.now()}`;
-        }, 3000);
+        }, 5000);
+        const fnameId = fileInputId === "fileEmail" ? "fileNameEmail" : "fileNameAkcja";
+        const wrapId = fileInputId === "fileEmail" ? "newPreviewEmailWrap" : "newPreviewAkcjaWrap";
+        fileEl.value = "";
+        document.getElementById(fnameId).textContent = "nie wybrano";
+        document.getElementById(wrapId).style.display = "none";
       }
 
+      // Update current link display + initial value + clear dirty
+      const currentLinkId = bannerFile === "banner_email_1.png" ? "currentLinkEmail" : "currentLinkAkcja";
+      document.getElementById(currentLinkId).textContent = linkVal;
+      if (bannerFile === "banner_email_1.png") initialValues.linkEmail = linkVal;
+      const saveBtnId = statusId.replace("status", "save");
+      clearDirty(saveBtnId);
+
       statusEl.className = "status-msg ok";
-      statusEl.textContent = "✓ Zapisano! Zmiany widoczne po chwili.";
+      statusEl.textContent = "✓ Zapisano! Podgląd zaktualizuje się za chwilę.";
     } catch (err) {
       statusEl.className = "status-msg err";
       statusEl.textContent = "Błąd: " + err.message;
@@ -502,11 +563,16 @@
         if (!imgOk) throw new Error("Błąd zapisu pliku graficznego");
         setTimeout(() => {
           document.getElementById("previewAkcja").src = `${RAW_BASE}/banner_akcja_1.png?t=${Date.now()}`;
-        }, 3000);
+        }, 5000);
+        fileEl.value = "";
+        document.getElementById("fileNameAkcja").textContent = "nie wybrano";
+        document.getElementById("newPreviewAkcjaWrap").style.display = "none";
       }
 
+      initialValues.redirectAkcja = redirectUrl;
+      clearDirty("saveAkcja");
       statusEl.className = "status-msg ok";
-      statusEl.textContent = "✓ Zapisano! Zmiany aktywne natychmiast.";
+      statusEl.textContent = "✓ Zapisano! Podgląd zaktualizuje się za chwilę (cache GitHub ~5s).";
     } catch (err) {
       statusEl.className = "status-msg err";
       statusEl.textContent = "Błąd: " + err.message;
