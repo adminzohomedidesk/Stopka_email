@@ -799,9 +799,10 @@
   </div>
 
   <script>
-    // === KONFIGURACJA API ===
-    const API_BASE_URL = "https://wfirma-api.onrender.com";
-    const API_KEY = "5566a1c91b84e36ec055c6a8e5c5d04e";
+    // === KONFIGURACJA GITHUB ===
+    const GITHUB_TOKEN = "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";
+    const GITHUB_REPO = "adminzohomedidesk/Stopka_email";
+    const GITHUB_BRANCH = "main";
     
     const outputEl = document.getElementById("output");
     const copyBtn = document.getElementById("copyBtn");
@@ -897,68 +898,77 @@
       });
     };
     
-    // Funkcja uploadu zdjęcia na serwer
+    // Funkcja uploadu zdjęcia bezpośrednio na GitHub
     const uploadPhotoToServer = async () => {
-      if (!img) return null; // Brak zdjęcia
-      if (!API_KEY) {
-        console.warn("Brak API_KEY - zdjęcie nie zostanie wgrane na serwer");
-        return null;
-      }
-      
+      if (!img) return null;
+
       const size = parseInt(photoSizeSelect.value, 10) || 218;
-      
-      // Eksportuj canvas do base64
+
       const exportCanvas = document.createElement("canvas");
       exportCanvas.width = exportCanvas.height = size;
       const exportCtx = exportCanvas.getContext("2d");
-      
+
       const scaleFactor = size / canvas.width;
       exportCtx.save();
       exportCtx.translate(offsetX * scaleFactor, offsetY * scaleFactor);
-      const scaledWidth = img.width * scale * scaleFactor;
-      const scaledHeight = img.height * scale * scaleFactor;
-      exportCtx.drawImage(img, 0, 0, scaledWidth, scaledHeight);
+      exportCtx.drawImage(img, 0, 0, img.width * scale * scaleFactor, img.height * scale * scaleFactor);
       exportCtx.restore();
-      
-      // Maska kołowa
+
       exportCtx.globalCompositeOperation = 'destination-in';
       exportCtx.beginPath();
       exportCtx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
       exportCtx.fill();
-      
-      const base64 = exportCanvas.toDataURL("image/png");
-      
+
+      const base64full = exportCanvas.toDataURL("image/png");
+      const base64data = base64full.split(",")[1];
+
+      // SHA-1 jako nazwa pliku — deduplikacja
+      const hashBuffer = await crypto.subtle.digest("SHA-1", Uint8Array.from(atob(base64data), c => c.charCodeAt(0)));
+      const hash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
+      const filename = `${hash}.png`;
+      const apiUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/photos/${filename}`;
+      const photoUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/photos/${filename}`;
+
       try {
-        console.log("%c📤 STOPKA: Wysyłam zdjęcie na serwer...", "color: #00bfa5; font-weight: bold;");
-        console.log("   Endpoint:", `${API_BASE_URL}/api/stopka/upload-photo`);
-        console.log("   Rozmiar zdjęcia:", size + "x" + size + "px");
-        
-        const response = await fetch(`${API_BASE_URL}/api/stopka/upload-photo`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-API-Key': API_KEY
-          },
-          body: JSON.stringify({ image_base64: base64 })
+        console.log("%c📤 STOPKA: Wysyłam zdjęcie na GitHub...", "color: #00bfa5; font-weight: bold;");
+
+        // Sprawdź czy plik już istnieje
+        const check = await fetch(apiUrl, {
+          headers: { Authorization: `token ${GITHUB_TOKEN}` }
         });
-        
-        const data = await response.json();
-        
-        if (data.success && data.url) {
-          uploadedPhotoUrl = data.url;
-          console.log("%c✅ STOPKA: Zdjęcie wgrane pomyślnie!", "color: #4caf50; font-weight: bold;");
-          console.log("   URL:", data.url);
-          console.log("   Nazwa pliku:", data.filename);
-          
-          return data.url;
+
+        if (check.status === 200) {
+          console.log("%c✅ STOPKA: Zdjęcie już istnieje, pomijam upload.", "color: #4caf50; font-weight: bold;");
+          console.log("   URL:", photoUrl);
+          uploadedPhotoUrl = photoUrl;
+          return photoUrl;
+        }
+
+        const response = await fetch(apiUrl, {
+          method: "PUT",
+          headers: {
+            Authorization: `token ${GITHUB_TOKEN}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: `Add photo ${filename}`,
+            content: base64data,
+            branch: GITHUB_BRANCH
+          })
+        });
+
+        if (response.ok) {
+          console.log("%c✅ STOPKA: Zdjęcie wgrane na GitHub!", "color: #4caf50; font-weight: bold;");
+          console.log("   URL:", photoUrl);
+          uploadedPhotoUrl = photoUrl;
+          return photoUrl;
         } else {
-          console.error("%c❌ STOPKA: Błąd uploadu", "color: #f44336; font-weight: bold;");
-          console.error("   Odpowiedź serwera:", data);
+          const err = await response.text();
+          console.error("%c❌ STOPKA: Błąd GitHub API", "color: #f44336; font-weight: bold;", err);
           return null;
         }
       } catch (error) {
-        console.error("%c❌ STOPKA: Błąd połączenia z API", "color: #f44336; font-weight: bold;");
-        console.error("   Szczegóły:", error);
+        console.error("%c❌ STOPKA: Błąd połączenia z GitHub", "color: #f44336; font-weight: bold;", error);
         return null;
       }
     };
