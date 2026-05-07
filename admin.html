@@ -99,17 +99,13 @@
 
     .banner-preview-wrap {
       display: flex;
-      gap: 24px;
-      align-items: flex-start;
-      flex-wrap: wrap;
+      flex-direction: column;
+      gap: 16px;
     }
 
-    .current-preview {
-      flex: 0 0 auto;
-    }
     .current-preview img {
-      max-width: 260px;
-      max-height: 90px;
+      max-width: 100%;
+      max-height: 100px;
       border-radius: 8px;
       border: 1px solid #e5e7eb;
       display: block;
@@ -119,8 +115,19 @@
       color: #9ca3af;
       margin-top: 6px;
     }
+    .current-link {
+      font-size: 0.82rem;
+      color: #6b7280;
+      word-break: break-all;
+      margin-top: 6px;
+      padding: 6px 10px;
+      background: #f9fafb;
+      border-radius: 6px;
+      border: 1px solid #e5e7eb;
+    }
+    .current-link span { color: #374151; font-weight: 500; }
 
-    .banner-form { flex: 1; min-width: 220px; }
+    .banner-form { width: 100%; }
 
     .field { margin-bottom: 14px; }
     .field label {
@@ -237,10 +244,11 @@
       <div class="current-preview">
         <img id="previewAkcja" src="https://raw.githubusercontent.com/adminzohomedidesk/Stopka_email/main/banner_akcja_1.png" alt="Banner akcji" />
         <div class="label">Aktualny banner</div>
+        <div class="current-link">Aktualny link: <span id="currentLinkAkcja">—</span></div>
       </div>
       <div class="banner-form">
         <div class="field">
-          <label>Link po kliknięciu w banner</label>
+          <label>Nowy link po kliknięciu w banner</label>
           <input type="url" id="linkAkcja" placeholder="https://..." />
         </div>
         <div class="field">
@@ -271,10 +279,11 @@
       <div class="current-preview">
         <img id="previewEmail" src="https://raw.githubusercontent.com/adminzohomedidesk/Stopka_email/main/banner_email_1.png" alt="Banner email" />
         <div class="label">Aktualny banner</div>
+        <div class="current-link">Aktualny link: <span id="currentLinkEmail">—</span></div>
       </div>
       <div class="banner-form">
         <div class="field">
-          <label>Link po kliknięciu w banner</label>
+          <label>Nowy link po kliknięciu w banner</label>
           <input type="url" id="linkEmail" placeholder="https://..." />
         </div>
         <div class="field">
@@ -330,8 +339,12 @@
     try {
       const r = await fetch(`${RAW_BASE}/banner_config.json?t=${Date.now()}`);
       const cfg = await r.json();
-      document.getElementById("linkAkcja").value = cfg["banner_akcja_1.png"]?.link || "";
-      document.getElementById("linkEmail").value = cfg["banner_email_1.png"]?.link || "";
+      const linkAkcja = cfg["banner_akcja_1.png"]?.link || "";
+      const linkEmail = cfg["banner_email_1.png"]?.link || "";
+      document.getElementById("linkAkcja").value = linkAkcja;
+      document.getElementById("linkEmail").value = linkEmail;
+      document.getElementById("currentLinkAkcja").textContent = linkAkcja || "—";
+      document.getElementById("currentLinkEmail").textContent = linkEmail || "—";
     } catch (e) {
       console.warn("Nie udało się wczytać banner_config.json", e);
     }
