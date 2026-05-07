@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Bannery Stopki</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px;
+      color: #1f2937;
+    }
+
+    .logo {
+      width: 140px;
+      margin-bottom: 28px;
+    }
+
+    /* PIN screen */
+    #pinScreen {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px 36px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      text-align: center;
+      width: 100%;
+      max-width: 360px;
+    }
+    #pinScreen h1 { font-size: 1.3rem; margin-bottom: 8px; }
+    #pinScreen p { color: #6b7280; font-size: 0.9rem; margin-bottom: 24px; }
+    #pinInput {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 1.2rem;
+      text-align: center;
+      letter-spacing: 0.3em;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    #pinInput:focus { border-color: #6366f1; }
+    #pinError { color: #ef4444; font-size: 0.85rem; margin-top: 10px; min-height: 20px; }
+    .btn-primary {
+      margin-top: 16px;
+      width: 100%;
+      padding: 12px;
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-primary:hover { background: #4f46e5; }
+    .btn-primary:disabled { background: #a5b4fc; cursor: not-allowed; }
+
+    /* Admin panel */
+    #adminPanel {
+      display: none;
+      width: 100%;
+      max-width: 760px;
+    }
+    #adminPanel h1 {
+      font-size: 1.4rem;
+      margin-bottom: 6px;
+    }
+    #adminPanel .subtitle {
+      color: #6b7280;
+      font-size: 0.9rem;
+      margin-bottom: 32px;
+    }
+
+    .banner-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      margin-bottom: 24px;
+    }
+    .banner-card h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .banner-card .desc {
+      font-size: 0.82rem;
+      color: #6b7280;
+      margin-bottom: 20px;
+    }
+
+    .banner-preview-wrap {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .current-preview {
+      flex: 0 0 auto;
+    }
+    .current-preview img {
+      max-width: 260px;
+      max-height: 90px;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      display: block;
+    }
+    .current-preview .label {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      margin-top: 6px;
+    }
+
+    .banner-form { flex: 1; min-width: 220px; }
+
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 5px;
+    }
+    .field input[type="text"],
+    .field input[type="url"] {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .field input:focus { border-color: #6366f1; }
+
+    .file-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .file-label {
+      display: inline-block;
+      padding: 8px 14px;
+      background: #f3f4f6;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    .file-label:hover { background: #e5e7eb; }
+    .file-name {
+      font-size: 0.82rem;
+      color: #6b7280;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 180px;
+    }
+    input[type="file"] { display: none; }
+
+    .new-preview-wrap { margin-top: 10px; display: none; }
+    .new-preview-wrap img {
+      max-width: 260px;
+      max-height: 90px;
+      border-radius: 8px;
+      border: 1px solid #6366f1;
+    }
+    .new-preview-wrap .label {
+      font-size: 0.75rem;
+      color: #6366f1;
+      margin-top: 4px;
+    }
+
+    .save-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .btn-save {
+      padding: 10px 24px;
+      background: #10b981;
+      color: #fff;
+      border: none;
+      border-radius: 9px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-weight: 600;
+    }
+    .btn-save:hover { background: #059669; }
+    .btn-save:disabled { background: #6ee7b7; cursor: not-allowed; }
+
+    .status-msg {
+      font-size: 0.85rem;
+      min-height: 20px;
+    }
+    .status-msg.ok { color: #10b981; }
+    .status-msg.err { color: #ef4444; }
+    .status-msg.loading { color: #6366f1; }
+  </style>
+</head>
+<body>
+
+<img class="logo" src="https://raw.githubusercontent.com/adminzohomedidesk/Stopka_email/main/20251001 MD fav.png" alt="Medidesk" />
+
+<!-- PIN -->
+<div id="pinScreen">
+  <h1>Panel administracyjny</h1>
+  <p>Wprowadź PIN aby zarządzać bannerami stopki email.</p>
+  <input id="pinInput" type="password" inputmode="numeric" maxlength="8" placeholder="••••" autocomplete="off" />
+  <div id="pinError"></div>
+  <button class="btn-primary" id="pinBtn">Wejdź</button>
+</div>
+
+<!-- Admin -->
+<div id="adminPanel">
+  <h1>Zarządzanie bannerami</h1>
+  <p class="subtitle">Zmiany są od razu widoczne w generatorze stopek po odświeżeniu strony.</p>
+
+  <!-- Banner akcja -->
+  <div class="banner-card">
+    <h2>Banner akcji / wydarzenia</h2>
+    <p class="desc">Plik: <code>banner_akcja_1.png</code> — wyświetlany jako pierwszy w generatorze</p>
+    <div class="banner-preview-wrap">
+      <div class="current-preview">
+        <img id="previewAkcja" src="https://raw.githubusercontent.com/adminzohomedidesk/Stopka_email/main/banner_akcja_1.png" alt="Banner akcji" />
+        <div class="label">Aktualny banner</div>
+      </div>
+      <div class="banner-form">
+        <div class="field">
+          <label>Link po kliknięciu w banner</label>
+          <input type="url" id="linkAkcja" placeholder="https://..." />
+        </div>
+        <div class="field">
+          <label>Nowy plik graficzny (opcjonalnie)</label>
+          <div class="file-row">
+            <label class="file-label" for="fileAkcja">Wybierz plik</label>
+            <span class="file-name" id="fileNameAkcja">nie wybrano</span>
+            <input type="file" id="fileAkcja" accept="image/png,image/jpeg,image/gif" />
+          </div>
+          <div class="new-preview-wrap" id="newPreviewAkcjaWrap">
+            <img id="newPreviewAkcja" src="" alt="Nowy banner" />
+            <div class="label">Nowy banner (podgląd)</div>
+          </div>
+        </div>
+        <div class="save-row">
+          <button class="btn-save" id="saveAkcja">Zapisz zmiany</button>
+          <span class="status-msg" id="statusAkcja"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Banner email -->
+  <div class="banner-card">
+    <h2>Banner standardowy</h2>
+    <p class="desc">Plik: <code>banner_email_1.png</code> — drugi banner w generatorze</p>
+    <div class="banner-preview-wrap">
+      <div class="current-preview">
+        <img id="previewEmail" src="https://raw.githubusercontent.com/adminzohomedidesk/Stopka_email/main/banner_email_1.png" alt="Banner email" />
+        <div class="label">Aktualny banner</div>
+      </div>
+      <div class="banner-form">
+        <div class="field">
+          <label>Link po kliknięciu w banner</label>
+          <input type="url" id="linkEmail" placeholder="https://..." />
+        </div>
+        <div class="field">
+          <label>Nowy plik graficzny (opcjonalnie)</label>
+          <div class="file-row">
+            <label class="file-label" for="fileEmail">Wybierz plik</label>
+            <span class="file-name" id="fileNameEmail">nie wybrano</span>
+            <input type="file" id="fileEmail" accept="image/png,image/jpeg,image/gif" />
+          </div>
+          <div class="new-preview-wrap" id="newPreviewEmailWrap">
+            <img id="newPreviewEmail" src="" alt="Nowy banner" />
+            <div class="label">Nowy banner (podgląd)</div>
+          </div>
+        </div>
+        <div class="save-row">
+          <button class="btn-save" id="saveEmail">Zapisz zmiany</button>
+          <span class="status-msg" id="statusEmail"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const PIN = "1728";
+  const GITHUB_TOKEN = "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";
+  const GITHUB_REPO = "adminzohomedidesk/Stopka_email";
+  const BRANCH = "main";
+  const RAW_BASE = `https://raw.githubusercontent.com/${GITHUB_REPO}/${BRANCH}`;
+  const API_BASE = `https://api.github.com/repos/${GITHUB_REPO}/contents`;
+
+  // PIN
+  const pinInput = document.getElementById("pinInput");
+  const pinBtn = document.getElementById("pinBtn");
+  const pinError = document.getElementById("pinError");
+
+  const checkPin = () => {
+    if (pinInput.value === PIN) {
+      document.getElementById("pinScreen").style.display = "none";
+      document.getElementById("adminPanel").style.display = "block";
+      loadConfig();
+    } else {
+      pinError.textContent = "Nieprawidłowy PIN.";
+      pinInput.value = "";
+      pinInput.focus();
+    }
+  };
+  pinBtn.addEventListener("click", checkPin);
+  pinInput.addEventListener("keydown", e => { if (e.key === "Enter") checkPin(); });
+
+  // Wczytaj aktualne linki z banner_config.json
+  const loadConfig = async () => {
+    try {
+      const r = await fetch(`${RAW_BASE}/banner_config.json?t=${Date.now()}`);
+      const cfg = await r.json();
+      document.getElementById("linkAkcja").value = cfg["banner_akcja_1.png"]?.link || "";
+      document.getElementById("linkEmail").value = cfg["banner_email_1.png"]?.link || "";
+    } catch (e) {
+      console.warn("Nie udało się wczytać banner_config.json", e);
+    }
+  };
+
+  // Podgląd nowego pliku
+  const setupFilePreview = (inputId, previewImgId, previewWrapId, fileNameId) => {
+    document.getElementById(inputId).addEventListener("change", function () {
+      const file = this.files[0];
+      if (!file) return;
+      document.getElementById(fileNameId).textContent = file.name;
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.getElementById(previewImgId).src = e.target.result;
+        document.getElementById(previewWrapId).style.display = "block";
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+  setupFilePreview("fileAkcja", "newPreviewAkcja", "newPreviewAkcjaWrap", "fileNameAkcja");
+  setupFilePreview("fileEmail", "newPreviewEmail", "newPreviewEmailWrap", "fileNameEmail");
+
+  // GitHub API helpers
+  const getFileSha = async (path) => {
+    const r = await fetch(`${API_BASE}/${path}`, {
+      headers: { Authorization: `token ${GITHUB_TOKEN}` }
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    return d.sha;
+  };
+
+  const pushFile = async (path, base64content, sha, message) => {
+    const body = { message, content: base64content, branch: BRANCH };
+    if (sha) body.sha = sha;
+    const r = await fetch(`${API_BASE}/${path}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `token ${GITHUB_TOKEN}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
+    });
+    return r.ok;
+  };
+
+  const fileToBase64 = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result.split(",")[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+  // Zapisz zmiany bannera
+  const saveBanner = async (bannerFile, linkInputId, fileInputId, statusId, previewCurrentId) => {
+    const statusEl = document.getElementById(statusId);
+    const linkVal = document.getElementById(linkInputId).value.trim();
+    const fileEl = document.getElementById(fileInputId);
+    const saveBtn = document.getElementById(statusId.replace("status", "save"));
+
+    if (!linkVal) {
+      statusEl.className = "status-msg err";
+      statusEl.textContent = "Podaj link dla bannera.";
+      return;
+    }
+
+    statusEl.className = "status-msg loading";
+    statusEl.textContent = "Zapisuję...";
+    saveBtn.disabled = true;
+
+    try {
+      // 1. Zaktualizuj banner_config.json
+      const configPath = "banner_config.json";
+      const configSha = await getFileSha(configPath);
+      const configRaw = await fetch(`${RAW_BASE}/${configPath}?t=${Date.now()}`);
+      const config = await configRaw.json();
+
+      config[bannerFile] = { link: linkVal };
+      const configBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(config, null, 2))));
+      const configOk = await pushFile(configPath, configBase64, configSha, `Update link for ${bannerFile}`);
+      if (!configOk) throw new Error("Błąd zapisu banner_config.json");
+
+      // 2. Podmień plik graficzny (jeśli wybrany)
+      if (fileEl.files[0]) {
+        const imgBase64 = await fileToBase64(fileEl.files[0]);
+        const imgSha = await getFileSha(bannerFile);
+        const imgOk = await pushFile(bannerFile, imgBase64, imgSha, `Update banner ${bannerFile}`);
+        if (!imgOk) throw new Error("Błąd zapisu pliku graficznego");
+
+        // Odśwież podgląd aktualnego bannera (cache-bust)
+        setTimeout(() => {
+          document.getElementById(previewCurrentId).src =
+            `${RAW_BASE}/${bannerFile}?t=${Date.now()}`;
+        }, 3000);
+      }
+
+      statusEl.className = "status-msg ok";
+      statusEl.textContent = "✓ Zapisano! Zmiany widoczne po chwili.";
+    } catch (err) {
+      statusEl.className = "status-msg err";
+      statusEl.textContent = "Błąd: " + err.message;
+    } finally {
+      saveBtn.disabled = false;
+    }
+  };
+
+  document.getElementById("saveAkcja").addEventListener("click", () =>
+    saveBanner("banner_akcja_1.png", "linkAkcja", "fileAkcja", "statusAkcja", "previewAkcja"));
+
+  document.getElementById("saveEmail").addEventListener("click", () =>
+    saveBanner("banner_email_1.png", "linkEmail", "fileEmail", "statusEmail", "previewEmail"));
+</script>
+</body>
+</html>
