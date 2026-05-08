@@ -978,7 +978,7 @@
       // Pobierz konfigurację linków z GitHuba
       let bannerConfig = {};
       try {
-        const configUrl = "https://raw.githubusercontent.com/adminzohomedidesk/Stopka_email/main/banner_config.json";
+        const configUrl = `https://raw.githubusercontent.com/adminzohomedidesk/Stopka_email/main/banner_config.json?t=${Date.now()}`;
         const configResponse = await fetch(configUrl);
         if (configResponse.ok) {
           bannerConfig = await configResponse.json();
@@ -988,25 +988,28 @@
         console.warn("⚠️ Nie udało się pobrać banner_config.json, używam domyślnych linków");
       }
       
+      const cacheBust = `?t=${Date.now()}`;
+
       // Check promo banner (tylko 1)
       const urlPromo = `${baseUrlPromo}1.png`;
       try {
-        const response = await fetch(urlPromo, { method: 'HEAD' });
+        const response = await fetch(urlPromo + cacheBust, { method: 'HEAD' });
         if (response.ok) {
           const bannerFileName = "banner_akcja_1.png";
           const link = bannerConfig[bannerFileName]?.link || "https://medidesk.pl";
-          promoBanners.push({ url: urlPromo, number: 1, type: 'akcja', link: link });
+          // url - czysty (idzie do stopki), displayUrl - z cache-bust (do podglądu)
+          promoBanners.push({ url: urlPromo, displayUrl: urlPromo + cacheBust, number: 1, type: 'akcja', link: link });
         }
       } catch (e) {}
-      
+
       // Check classic banner (tylko 1)
       const urlClassic = `${baseUrlClassic}1.png`;
       try {
-        const response = await fetch(urlClassic, { method: 'HEAD' });
+        const response = await fetch(urlClassic + cacheBust, { method: 'HEAD' });
         if (response.ok) {
           const bannerFileName = "banner_email_1.png";
           const link = bannerConfig[bannerFileName]?.link || "https://medidesk.pl";
-          classicBanners.push({ url: urlClassic, number: 1, type: 'email', link: link });
+          classicBanners.push({ url: urlClassic, displayUrl: urlClassic + cacheBust, number: 1, type: 'email', link: link });
         }
       } catch (e) {}
       
@@ -1062,7 +1065,7 @@
         radio.style.cssText = 'width: 20px; height: 20px; cursor: pointer; margin: 0; flex-shrink: 0;';
         
         const img = document.createElement('img');
-        img.src = banner.url;
+        img.src = banner.displayUrl || banner.url;
         img.alt = `Banner ${banner.type} ${banner.number}`;
         img.style.cssText = 'width: 100%; height: auto; display: block; flex: 1;';
         
