@@ -803,11 +803,9 @@
   </div>
 
   <script>
-    // === KONFIGURACJA GITHUB ===
-    const _gh = ["gi","th","ub","_","pa","t_","11B2JL44Q0MN","dS4x9sGG7x_","dvXK0Hg3e8db","QreMAeJhoM9","j0dxW2aRgpU","jjBQWKz1gIM","3XEAV6d7L7vED0"];
-    const GITHUB_TOKEN = _gh.join("");
-    const GITHUB_REPO = "adminzohomedidesk/Stopka_email";
-    const GITHUB_BRANCH = "main";
+    // === KONFIGURACJA API ===
+    const API_URL = "https://stopka-api.onrender.com";
+    const GENERATOR_KEY = "b752cb063ef8f97a1959ff5c56a06b5e";
     
     const outputEl = document.getElementById("output");
     const copyBtn = document.getElementById("copyBtn");
@@ -903,12 +901,11 @@
       });
     };
     
-    // Funkcja uploadu zdjęcia bezpośrednio na GitHub
+    // Upload zdjęcia przez proxy
     const uploadPhotoToServer = async () => {
       if (!img) return null;
 
       const size = parseInt(photoSizeSelect.value, 10) || 218;
-
       const exportCanvas = document.createElement("canvas");
       exportCanvas.width = exportCanvas.height = size;
       const exportCtx = exportCanvas.getContext("2d");
@@ -924,56 +921,34 @@
       exportCtx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
       exportCtx.fill();
 
-      const base64full = exportCanvas.toDataURL("image/png");
-      const base64data = base64full.split(",")[1];
-
-      // SHA-1 jako nazwa pliku — deduplikacja
-      const hashBuffer = await crypto.subtle.digest("SHA-1", Uint8Array.from(atob(base64data), c => c.charCodeAt(0)));
-      const hash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
-      const filename = `${hash}.png`;
-      const apiUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/photos/${filename}`;
-      const photoUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/photos/${filename}`;
+      const base64data = exportCanvas.toDataURL("image/png").split(",")[1];
 
       try {
-        console.log("%c📤 STOPKA: Wysyłam zdjęcie na GitHub...", "color: #00bfa5; font-weight: bold;");
-
-        // Sprawdź czy plik już istnieje
-        const check = await fetch(apiUrl, {
-          headers: { Authorization: `token ${GITHUB_TOKEN}` }
-        });
-
-        if (check.status === 200) {
-          console.log("%c✅ STOPKA: Zdjęcie już istnieje, pomijam upload.", "color: #4caf50; font-weight: bold;");
-          console.log("   URL:", photoUrl);
-          uploadedPhotoUrl = photoUrl;
-          return photoUrl;
-        }
-
-        const response = await fetch(apiUrl, {
-          method: "PUT",
+        console.log("%c📤 STOPKA: Wysyłam zdjęcie...", "color: #00bfa5; font-weight: bold;");
+        const response = await fetch(`${API_URL}/api/upload-photo`, {
+          method: "POST",
           headers: {
-            Authorization: `token ${GITHUB_TOKEN}`,
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "X-API-Key": GENERATOR_KEY
           },
-          body: JSON.stringify({
-            message: `Add photo ${filename}`,
-            content: base64data,
-            branch: GITHUB_BRANCH
-          })
+          body: JSON.stringify({ image_base64: base64data })
         });
 
-        if (response.ok) {
-          console.log("%c✅ STOPKA: Zdjęcie wgrane na GitHub!", "color: #4caf50; font-weight: bold;");
-          console.log("   URL:", photoUrl);
-          uploadedPhotoUrl = photoUrl;
-          return photoUrl;
-        } else {
-          const err = await response.text();
-          console.error("%c❌ STOPKA: Błąd GitHub API", "color: #f44336; font-weight: bold;", err);
+        if (!response.ok) {
+          console.error("%c❌ STOPKA: Błąd serwera", "color: #f44336;", response.status);
           return null;
         }
+
+        const data = await response.json();
+        if (data.success && data.url) {
+          console.log("%c✅ STOPKA: Zdjęcie wgrane!", "color: #4caf50; font-weight: bold;");
+          console.log("   URL:", data.url, data.duplicate ? "(duplicate)" : "");
+          uploadedPhotoUrl = data.url;
+          return data.url;
+        }
+        return null;
       } catch (error) {
-        console.error("%c❌ STOPKA: Błąd połączenia z GitHub", "color: #f44336; font-weight: bold;", error);
+        console.error("%c❌ STOPKA: Błąd połączenia", "color: #f44336;", error);
         return null;
       }
     };

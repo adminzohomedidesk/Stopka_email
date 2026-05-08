@@ -324,13 +324,9 @@
 </div>
 
 <script>
-  const PIN = "1728";
-  const _gh = ["gi","th","ub","_","pa","t_","11B2JL44Q0MN","dS4x9sGG7x_","dvXK0Hg3e8db","QreMAeJhoM9","j0dxW2aRgpU","jjBQWKz1gIM","3XEAV6d7L7vED0"];
-  const GITHUB_TOKEN = _gh.join("");
-  const GITHUB_REPO = "adminzohomedidesk/Stopka_email";
-  const BRANCH = "main";
-  const RAW_BASE = `https://raw.githubusercontent.com/${GITHUB_REPO}/${BRANCH}`;
-  const API_BASE = `https://api.github.com/repos/${GITHUB_REPO}/contents`;
+  const API_URL = "https://stopka-api.onrender.com";
+  const RAW_BASE = "https://raw.githubusercontent.com/adminzohomedidesk/Stopka_email/main";
+  let userPin = "";  // PIN walidowany serwerowo
 
   // PIN
   const pinInput = document.getElementById("pinInput");
@@ -338,32 +334,31 @@
   const pinError = document.getElementById("pinError");
 
   const checkPin = () => {
-    if (pinInput.value === PIN) {
-      document.getElementById("pinScreen").style.display = "none";
-      document.getElementById("adminPanel").style.display = "block";
-      loadConfig();
-    } else {
-      pinError.textContent = "Nieprawidłowy PIN.";
-      pinInput.value = "";
-      pinInput.focus();
+    // PIN walidowany serwerowo przy zapisie
+    if (!pinInput.value) {
+      pinError.textContent = "Wprowadź PIN.";
+      return;
     }
+    userPin = pinInput.value;
+    document.getElementById("pinScreen").style.display = "none";
+    document.getElementById("adminPanel").style.display = "block";
+    loadConfig();
   };
   pinBtn.addEventListener("click", checkPin);
   pinInput.addEventListener("keydown", e => { if (e.key === "Enter") checkPin(); });
 
   const loadConfig = async () => {
     try {
-      // Wczytaj aktualny redirect z banner_akcja.html
-      const akcjaHtml = await fetch(`${RAW_BASE}/banner_akcja.html?t=${Date.now()}`).then(r => r.text());
-      const match = akcjaHtml.match(/window\.location\.href\s*=\s*"([^"]+)"/);
-      const redirectUrl = match ? match[1] : "";
+      const r = await fetch(`${API_URL}/api/config?t=${Date.now()}`);
+      if (!r.ok) throw new Error("Serwer nie odpowiada");
+      const cfg = await r.json();
+
+      const redirectUrl = cfg.redirect_akcja || "";
       document.getElementById("redirectAkcja").value = redirectUrl;
       document.getElementById("currentRedirectAkcja").textContent = redirectUrl || "—";
       initialValues.redirectAkcja = redirectUrl;
 
-      // Wczytaj link bannera standardowego z banner_config.json
-      const cfg = await fetch(`${RAW_BASE}/banner_config.json?t=${Date.now()}`).then(r => r.json());
-      const linkEmail = cfg["banner_email_1.png"]?.link || "";
+      const linkEmail = cfg.link_email || "";
       document.getElementById("linkEmail").value = linkEmail;
       document.getElementById("currentLinkEmail").textContent = linkEmail || "—";
       initialValues.linkEmail = linkEmail;
@@ -420,30 +415,6 @@
   });
   document.getElementById("fileEmail").addEventListener("change", () => markDirty("saveEmail"));
 
-  // GitHub API helpers
-  const getFileSha = async (path) => {
-    const r = await fetch(`${API_BASE}/${path}`, {
-      headers: { Authorization: `token ${GITHUB_TOKEN}` }
-    });
-    if (!r.ok) return null;
-    const d = await r.json();
-    return d.sha;
-  };
-
-  const pushFile = async (path, base64content, sha, message) => {
-    const body = { message, content: base64content, branch: BRANCH };
-    if (sha) body.sha = sha;
-    const r = await fetch(`${API_BASE}/${path}`, {
-      method: "PUT",
-      headers: {
-        Authorization: `token ${GITHUB_TOKEN}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(body)
-    });
-    return r.ok;
-  };
-
   const fileToBase64 = (file) => new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = e => resolve(e.target.result.split(",")[1]);
@@ -451,72 +422,7 @@
     reader.readAsDataURL(file);
   });
 
-  // Zapisz zmiany bannera
-  const saveBanner = async (bannerFile, linkInputId, fileInputId, statusId, previewCurrentId) => {
-    const statusEl = document.getElementById(statusId);
-    const linkVal = document.getElementById(linkInputId).value.trim();
-    const fileEl = document.getElementById(fileInputId);
-    const saveBtn = document.getElementById(statusId.replace("status", "save"));
-
-    if (!linkVal) {
-      statusEl.className = "status-msg err";
-      statusEl.textContent = "Podaj link dla bannera.";
-      return;
-    }
-
-    statusEl.className = "status-msg loading";
-    statusEl.textContent = "Zapisuję...";
-    saveBtn.disabled = true;
-
-    try {
-      // 1. Zaktualizuj banner_config.json
-      const configPath = "banner_config.json";
-      const configSha = await getFileSha(configPath);
-      const configRaw = await fetch(`${RAW_BASE}/${configPath}?t=${Date.now()}`);
-      const config = await configRaw.json();
-
-      config[bannerFile] = { link: linkVal };
-      const configBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(config, null, 2))));
-      const configOk = await pushFile(configPath, configBase64, configSha, `Update link for ${bannerFile}`);
-      if (!configOk) throw new Error("Błąd zapisu banner_config.json");
-
-      // 2. Podmień plik graficzny (jeśli wybrany)
-      if (fileEl.files[0]) {
-        const imgBase64 = await fileToBase64(fileEl.files[0]);
-        const imgSha = await getFileSha(bannerFile);
-        const imgOk = await pushFile(bannerFile, imgBase64, imgSha, `Update banner ${bannerFile}`);
-        if (!imgOk) throw new Error("Błąd zapisu pliku graficznego");
-
-        // Odśwież podgląd aktualnego bannera (cache-bust)
-        setTimeout(() => {
-          document.getElementById(previewCurrentId).src =
-            `${RAW_BASE}/${bannerFile}?t=${Date.now()}`;
-        }, 5000);
-        const fnameId = fileInputId === "fileEmail" ? "fileNameEmail" : "fileNameAkcja";
-        const wrapId = fileInputId === "fileEmail" ? "newPreviewEmailWrap" : "newPreviewAkcjaWrap";
-        fileEl.value = "";
-        document.getElementById(fnameId).textContent = "nie wybrano";
-        document.getElementById(wrapId).style.display = "none";
-      }
-
-      // Update current link display + initial value + clear dirty
-      const currentLinkId = bannerFile === "banner_email_1.png" ? "currentLinkEmail" : "currentLinkAkcja";
-      document.getElementById(currentLinkId).textContent = linkVal;
-      if (bannerFile === "banner_email_1.png") initialValues.linkEmail = linkVal;
-      const saveBtnId = statusId.replace("status", "save");
-      clearDirty(saveBtnId);
-
-      statusEl.className = "status-msg ok";
-      statusEl.textContent = "✓ Zapisano! Podgląd zaktualizuje się za chwilę.";
-    } catch (err) {
-      statusEl.className = "status-msg err";
-      statusEl.textContent = "Błąd: " + err.message;
-    } finally {
-      saveBtn.disabled = false;
-    }
-  };
-
-  // Zapis bannera akcji — aktualizuje banner_akcja.html + opcjonalnie obraz
+  // Banner akcji
   document.getElementById("saveAkcja").addEventListener("click", async () => {
     const statusEl = document.getElementById("statusAkcja");
     const saveBtn = document.getElementById("saveAkcja");
@@ -530,37 +436,24 @@
     }
 
     statusEl.className = "status-msg loading";
-    statusEl.textContent = "Zapisuję...";
+    statusEl.textContent = "Zapisuję... (jeśli serwer spał, może potrwać ~30s)";
     saveBtn.disabled = true;
 
     try {
-      // 1. Zaktualizuj banner_akcja.html
-      const newHtml = `<!DOCTYPE html>
-<html lang="pl">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=${redirectUrl}">
-  <script>window.location.href="${redirectUrl}";<\/script>
-  <title>Przekierowanie do wydarzenia Medidesk</title>
-</head>
-<body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f7fb;">
-  <h1 style="color: #00bfa5;">Przekierowanie...</h1>
-  <p>Zaraz zostaniesz przekierowany do strony wydarzenia.</p>
-  <p><a href="${redirectUrl}" style="color: #0097a7;">Kliknij tutaj, jeśli nie nastąpi automatyczne przekierowanie</a></p>
-</body>
-</html>`;
-      const htmlBase64 = btoa(unescape(encodeURIComponent(newHtml)));
-      const htmlSha = await getFileSha("banner_akcja.html");
-      const htmlOk = await pushFile("banner_akcja.html", htmlBase64, htmlSha, `Update redirect to ${redirectUrl}`);
-      if (!htmlOk) throw new Error("Błąd zapisu banner_akcja.html");
-      document.getElementById("currentRedirectAkcja").textContent = redirectUrl;
+      const payload = { pin: userPin, redirect_url: redirectUrl };
+      if (fileEl.files[0]) payload.image_base64 = await fileToBase64(fileEl.files[0]);
 
-      // 2. Podmień obraz (jeśli wybrany)
+      const r = await fetch(`${API_URL}/api/admin/banner-akcja`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (r.status === 401) throw new Error("Nieprawidłowy PIN — odśwież stronę i wpisz poprawny.");
+      if (!r.ok) throw new Error("Błąd serwera (" + r.status + ")");
+
+      document.getElementById("currentRedirectAkcja").textContent = redirectUrl;
       if (fileEl.files[0]) {
-        const imgBase64 = await fileToBase64(fileEl.files[0]);
-        const imgSha = await getFileSha("banner_akcja_1.png");
-        const imgOk = await pushFile("banner_akcja_1.png", imgBase64, imgSha, "Update banner_akcja_1.png");
-        if (!imgOk) throw new Error("Błąd zapisu pliku graficznego");
         setTimeout(() => {
           document.getElementById("previewAkcja").src = `${RAW_BASE}/banner_akcja_1.png?t=${Date.now()}`;
         }, 5000);
@@ -572,7 +465,7 @@
       initialValues.redirectAkcja = redirectUrl;
       clearDirty("saveAkcja");
       statusEl.className = "status-msg ok";
-      statusEl.textContent = "✓ Zapisano! Podgląd zaktualizuje się za chwilę (cache GitHub ~5s).";
+      statusEl.textContent = "✓ Zapisano! Podgląd zaktualizuje się za chwilę.";
     } catch (err) {
       statusEl.className = "status-msg err";
       statusEl.textContent = "Błąd: " + err.message;
@@ -581,8 +474,57 @@
     }
   });
 
-  document.getElementById("saveEmail").addEventListener("click", () =>
-    saveBanner("banner_email_1.png", "linkEmail", "fileEmail", "statusEmail", "previewEmail"));
+  // Banner standardowy
+  document.getElementById("saveEmail").addEventListener("click", async () => {
+    const statusEl = document.getElementById("statusEmail");
+    const saveBtn = document.getElementById("saveEmail");
+    const linkVal = document.getElementById("linkEmail").value.trim();
+    const fileEl = document.getElementById("fileEmail");
+
+    if (!linkVal) {
+      statusEl.className = "status-msg err";
+      statusEl.textContent = "Podaj link dla bannera.";
+      return;
+    }
+
+    statusEl.className = "status-msg loading";
+    statusEl.textContent = "Zapisuję... (jeśli serwer spał, może potrwać ~30s)";
+    saveBtn.disabled = true;
+
+    try {
+      const payload = { pin: userPin, link: linkVal };
+      if (fileEl.files[0]) payload.image_base64 = await fileToBase64(fileEl.files[0]);
+
+      const r = await fetch(`${API_URL}/api/admin/banner-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (r.status === 401) throw new Error("Nieprawidłowy PIN — odśwież stronę i wpisz poprawny.");
+      if (!r.ok) throw new Error("Błąd serwera (" + r.status + ")");
+
+      document.getElementById("currentLinkEmail").textContent = linkVal;
+      if (fileEl.files[0]) {
+        setTimeout(() => {
+          document.getElementById("previewEmail").src = `${RAW_BASE}/banner_email_1.png?t=${Date.now()}`;
+        }, 5000);
+        fileEl.value = "";
+        document.getElementById("fileNameEmail").textContent = "nie wybrano";
+        document.getElementById("newPreviewEmailWrap").style.display = "none";
+      }
+
+      initialValues.linkEmail = linkVal;
+      clearDirty("saveEmail");
+      statusEl.className = "status-msg ok";
+      statusEl.textContent = "✓ Zapisano! Podgląd zaktualizuje się za chwilę.";
+    } catch (err) {
+      statusEl.className = "status-msg err";
+      statusEl.textContent = "Błąd: " + err.message;
+    } finally {
+      saveBtn.disabled = false;
+    }
+  });
 </script>
 </body>
 </html>
