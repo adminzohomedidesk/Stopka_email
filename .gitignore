@@ -1,0 +1,28 @@
+# === Pliki lokalne / robocze — NIE publikować w publicznym repo ===
+# Repo adminzohomedidesk/Stopka_email jest PUBLICZNE. Trzymaj tu tylko to,
+# co faktycznie serwuje GitHub Pages (HTML, PNG, banner_config.json, CNAME, photos/).
+
+# Dokumentacja wewnętrzna (zawiera PIN, mapę architektury/sekretów)
+CLAUDE.md
+TESTING_STRATEGY.md
+
+# Placeholder
+test.py
+
+# Lokalna kopia kodu proxy — źródłem jest prywatne repo katarzynaochnikdu/stopka-api
+server/
+
+# === Sekrety / env (defense in depth — gdyby kiedyś tu trafiły) ===
+.env
+.env.*
+*.key
+*.pem
+*.p12
+secrets*.json
+credentials*.json
+
+# === Śmieci systemowe / edytory ===
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
