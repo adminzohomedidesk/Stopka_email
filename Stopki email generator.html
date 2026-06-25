@@ -720,28 +720,27 @@
 
       <!-- Krok 5: Generuj -->
       <section class="step-card" id="step5-generate" data-step="5">
-        <div class="step-header">Krok 5: Wygeneruj i skopiuj HTML</div>
+        <div class="step-header">Krok 5: Wygeneruj i skopiuj stopkę</div>
         <div class="step-content">
           <div id="photoSummary" class="info-box" style="margin-bottom: 1rem; padding: 0.75rem; font-size: 0.9rem;">
             <strong>📷 Zdjęcie:</strong> <span id="photoSummaryText">Nie wgrano zdjęcia — w stopce pojawi się placeholder [WSTAW_ZDJECIE].</span>
           </div>
           <div class="actions">
             <button type="submit" class="primary">Generuj stopkę HTML</button>
-            <button type="button" id="copyBtn" class="secondary" disabled>Kopiuj HTML do schowka</button>
+            <button type="button" id="copyBtn" class="secondary" disabled>📋 Kopiuj stopkę</button>
           </div>
           
           <!-- Instrukcja wklejania (widoczna po wygenerowaniu) -->
           <div id="pasteInstruction" style="display: none; margin-top: 1rem;">
-            <div style="padding: 0.75rem; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3; margin-bottom: 0.5rem;">
-              <strong style="color: #1565c0;">📧 Outlook / Gmail / Apple Mail</strong>
-              <p style="margin: 0.5rem 0 0; font-size: 0.85rem; line-height: 1.5;">
-                Skopiuj stopkę <strong>z podglądu</strong> (zaznacz stopkę w sekcji „Podgląd stopki” → Ctrl+C), a następnie wklej do edytora podpisu (Ctrl+V).
-              </p>
-            </div>
-            <div style="padding: 0.75rem; background: #fce4ec; border-radius: 8px; border-left: 4px solid #e91e63;">
-              <strong style="color: #c2185b;">🔧 Zoho CRM</strong>
-              <p style="margin: 0.5rem 0 0; font-size: 0.85rem; line-height: 1.5;">
-                Kliknij „Kopiuj HTML do schowka”, przejdź do edytora podpisu i wklej jako <strong>HTML (kod źródłowy)</strong> – opcja „Wklej jako HTML” lub &lt;/&gt;.
+            <div class="info-box" style="background: #f0fdfb; border: 1px solid var(--primary);">
+              <strong style="display: block; margin-bottom: 0.5rem; font-size: 0.95rem;">📋 Jak wstawić stopkę do maila</strong>
+              <ol style="margin: 0; padding-left: 1.3rem; font-size: 0.9rem; line-height: 1.7;">
+                <li>Kliknij <strong>„📋 Kopiuj stopkę”</strong> (przycisk powyżej).</li>
+                <li>Otwórz ustawienia <strong>podpisu</strong> w mailu (Outlook / Gmail / Apple Mail).</li>
+                <li>Wklej zwykłym <strong>Ctrl+V</strong> — stopka pojawi się od razu sformatowana.</li>
+              </ol>
+              <p style="margin: 0.7rem 0 0; font-size: 0.82rem; color: var(--gray);">
+                <strong>Zoho CRM:</strong> po skopiowaniu użyj w edytorze opcji <strong>„Wklej jako HTML / kod źródłowy”</strong> (&lt;/&gt;).
               </p>
             </div>
           </div>
@@ -754,7 +753,7 @@
       <section class="step-card" id="panelPreview">
         <div class="step-header">Krok 6: Podgląd stopki</div>
         <div class="step-content">
-          <div id="preview" style="border: 2px solid var(--border-color); border-radius: 8px; padding: 1rem; background: #fafafa; min-height: 200px; overflow: auto;">
+          <div id="preview" style="border: 2px solid var(--border-color); border-radius: 8px; padding: 1rem; background: #ffffff; min-height: 200px; overflow: auto;">
             <p style="color: #999; text-align: center;">Uzupełnij formularz i kliknij "Generuj stopkę HTML", aby zobaczyć podgląd</p>
           </div>
         </div>
@@ -779,22 +778,18 @@
   <div class="modal-overlay" id="instructionModal">
     <div class="modal-card" style="max-width: 600px;">
       <h3>✅ Stopka wygenerowana!</h3>
-      <p style="margin: 0.75rem 0;">Teraz możesz wkleić stopkę do programu pocztowego:</p>
+      <p style="margin: 0.75rem 0;">W 3 krokach wstawisz ją do swojego maila:</p>
       
       <div style="display: flex; flex-direction: column; gap: 0.75rem; margin: 1rem 0;">
-        <div style="padding: 0.75rem; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;">
-          <strong style="color: #1565c0;">📧 Outlook / Gmail / Apple Mail</strong>
-          <p style="margin: 0.5rem 0 0; font-size: 0.9rem; line-height: 1.5;">
-            Skopiuj stopkę <strong>z podglądu</strong> (zaznacz stopkę w sekcji „Podgląd stopki” → Ctrl+C), a następnie wklej do edytora podpisu (Ctrl+V).
-          </p>
-        </div>
+        <ol style="margin: 0; padding-left: 1.4rem; font-size: 0.95rem; line-height: 1.9;">
+          <li>Kliknij <strong>„📋 Kopiuj stopkę”</strong> (Krok 5).</li>
+          <li>Otwórz ustawienia <strong>podpisu</strong> w mailu (Outlook / Gmail / Apple Mail).</li>
+          <li>Wklej zwykłym <strong>Ctrl+V</strong> — stopka pojawi się od razu sformatowana.</li>
+        </ol>
         
-        <div style="padding: 0.75rem; background: #fce4ec; border-radius: 8px; border-left: 4px solid #e91e63;">
-          <strong style="color: #c2185b;">🔧 Zoho CRM</strong>
-          <p style="margin: 0.5rem 0 0; font-size: 0.9rem; line-height: 1.5;">
-            Kliknij „Kopiuj HTML do schowka”, przejdź do edytora podpisu i wklej jako <strong>HTML (kod źródłowy)</strong> – opcja „Wklej jako HTML” lub &lt;/&gt;.
-          </p>
-        </div>
+        <p style="margin: 0; padding: 0.6rem 0.75rem; background: #fce4ec; border-radius: 8px; font-size: 0.85rem; line-height: 1.5;">
+          <strong style="color: #c2185b;">🔧 Zoho CRM:</strong> po skopiowaniu użyj w edytorze opcji <strong>„Wklej jako HTML / kod źródłowy”</strong> (&lt;/&gt;).
+        </p>
       </div>
       
       <div class="modal-actions">
@@ -1591,18 +1586,51 @@ ${linkedin ? `<a href="${linkedin}" title="${linkedin}" style="text-decoration:n
     copyBtn.addEventListener("click", async () => {
       const html = outputEl.value.trim();
       if (!html) return;
+      const previewEl = document.getElementById("preview");
+      let ok = false;
+
+      // 1) Wrzuć gotową stopkę do schowka jako HTML — zwykły Ctrl+V w edytorze
+      //    podpisu wklei ją od razu sformatowaną (bez ręcznego zaznaczania
+      //    i bez szarego tła podglądu).
       try {
-        await navigator.clipboard.writeText(html);
-        copyBtn.textContent = "Skopiowano!";
-      } catch {
-        // Fallback dla iframe (Zoho CRM)
-        outputEl.style.display = "block";
-        outputEl.select();
-        document.execCommand("copy");
-        outputEl.style.display = "none";
-        copyBtn.textContent = "Skopiowano!";
+        if (navigator.clipboard && window.ClipboardItem) {
+          await navigator.clipboard.write([new ClipboardItem({
+            "text/html": new Blob([html], { type: "text/html" }),
+            "text/plain": new Blob([html], { type: "text/plain" })
+          })]);
+          ok = true;
+        }
+      } catch (e) { /* metoda zapasowa niżej */ }
+
+      // 2) Zapas (iframe Zoho CRM, starsze przeglądarki): zaznacz podgląd
+      //    na białym tle i skopiuj jako HTML przez execCommand.
+      if (!ok && previewEl) {
+        try {
+          const prevBg = previewEl.style.background;
+          previewEl.style.background = "#ffffff";
+          const sel = window.getSelection();
+          const range = document.createRange();
+          range.selectNodeContents(previewEl);
+          sel.removeAllRanges();
+          sel.addRange(range);
+          ok = document.execCommand("copy");
+          sel.removeAllRanges();
+          previewEl.style.background = prevBg;
+        } catch (e) { /* ostatnia metoda niżej */ }
       }
-      setTimeout(() => { copyBtn.textContent = "Kopiuj HTML do schowka"; }, 2000);
+
+      // 3) Ostatecznie: kod źródłowy jako zwykły tekst.
+      if (!ok) {
+        try {
+          outputEl.style.display = "block";
+          outputEl.select();
+          ok = document.execCommand("copy");
+          outputEl.style.display = "none";
+        } catch (e) { /* nic */ }
+      }
+
+      copyBtn.textContent = ok ? "Skopiowano! ✓" : "Nie udało się — zaznacz ręcznie";
+      setTimeout(() => { copyBtn.textContent = "📋 Kopiuj stopkę"; }, 2200);
     });
 
     // Sekcje: na starcie otwarty tylko Krok 1; dalej użytkownik sam otwiera/zamyka (bez auto-zamykania innych)
