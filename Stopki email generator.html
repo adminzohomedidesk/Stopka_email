@@ -720,29 +720,13 @@
 
       <!-- Krok 5: Generuj -->
       <section class="step-card" id="step5-generate" data-step="5">
-        <div class="step-header">Krok 5: Wygeneruj i skopiuj stopkę</div>
+        <div class="step-header">Krok 5: Wygeneruj stopkę</div>
         <div class="step-content">
           <div id="photoSummary" class="info-box" style="margin-bottom: 1rem; padding: 0.75rem; font-size: 0.9rem;">
             <strong>📷 Zdjęcie:</strong> <span id="photoSummaryText">Nie wgrano zdjęcia — w stopce pojawi się placeholder [WSTAW_ZDJECIE].</span>
           </div>
           <div class="actions">
             <button type="submit" class="primary">Generuj stopkę HTML</button>
-            <button type="button" id="copyBtn" class="secondary" disabled>📋 Kopiuj stopkę</button>
-          </div>
-          
-          <!-- Instrukcja wklejania (widoczna po wygenerowaniu) -->
-          <div id="pasteInstruction" style="display: none; margin-top: 1rem;">
-            <div class="info-box" style="background: #f0fdfb; border: 1px solid var(--primary);">
-              <strong style="display: block; margin-bottom: 0.5rem; font-size: 0.95rem;">📋 Jak wstawić stopkę do maila</strong>
-              <ol style="margin: 0; padding-left: 1.3rem; font-size: 0.9rem; line-height: 1.7;">
-                <li>Kliknij <strong>„📋 Kopiuj stopkę”</strong> (przycisk powyżej).</li>
-                <li>Otwórz ustawienia <strong>podpisu</strong> w mailu (Outlook / Gmail / Apple Mail).</li>
-                <li>Wklej zwykłym <strong>Ctrl+V</strong> — stopka pojawi się od razu sformatowana.</li>
-              </ol>
-              <p style="margin: 0.7rem 0 0; font-size: 0.82rem; color: var(--gray);">
-                <strong>Zoho CRM:</strong> po skopiowaniu użyj w edytorze opcji <strong>„Wklej jako HTML / kod źródłowy”</strong> (&lt;/&gt;).
-              </p>
-            </div>
           </div>
           
           <textarea id="output" readonly style="display: none;"></textarea>
@@ -751,8 +735,19 @@
 
       <!-- Podgląd stopki -->
       <section class="step-card" id="panelPreview">
-        <div class="step-header">Krok 6: Podgląd stopki</div>
+        <div class="step-header">Krok 6: Podgląd i kopiowanie stopki</div>
         <div class="step-content">
+          <!-- Dwa sposoby kopiowania — tuż przy podglądzie -->
+          <div style="display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 240px;">
+              <button type="button" id="copyEffectBtn" class="secondary" disabled style="width: 100%;">📋 Kopiuj efekt końcowy</button>
+              <div class="hint">Gotowa, sformatowana stopka. Do <strong>Outlooka / Gmaila / Apple Mail</strong> — wklej zwykłym <strong>Ctrl+V</strong>.</div>
+            </div>
+            <div style="flex: 1; min-width: 240px;">
+              <button type="button" id="copyHtmlBtn" class="secondary" disabled style="width: 100%;">&lt;/&gt; Kopiuj kod HTML</button>
+              <div class="hint">Surowy kod źródłowy. Do <strong>Zoho CRM</strong> / edytora HTML — opcja <strong>„Wklej jako HTML”</strong> (&lt;/&gt;).</div>
+            </div>
+          </div>
           <div id="preview" style="border: 2px solid var(--border-color); border-radius: 8px; padding: 1rem; background: #ffffff; min-height: 200px; overflow: auto;">
             <p style="color: #999; text-align: center;">Uzupełnij formularz i kliknij "Generuj stopkę HTML", aby zobaczyć podgląd</p>
           </div>
@@ -778,17 +773,15 @@
   <div class="modal-overlay" id="instructionModal">
     <div class="modal-card" style="max-width: 600px;">
       <h3>✅ Stopka wygenerowana!</h3>
-      <p style="margin: 0.75rem 0;">W 3 krokach wstawisz ją do swojego maila:</p>
+      <p style="margin: 0.75rem 0;">Skopiuj ją w sekcji „Podgląd i kopiowanie" — wybierz sposób:</p>
       
       <div style="display: flex; flex-direction: column; gap: 0.75rem; margin: 1rem 0;">
-        <ol style="margin: 0; padding-left: 1.4rem; font-size: 0.95rem; line-height: 1.9;">
-          <li>Kliknij <strong>„📋 Kopiuj stopkę”</strong> (Krok 5).</li>
-          <li>Otwórz ustawienia <strong>podpisu</strong> w mailu (Outlook / Gmail / Apple Mail).</li>
-          <li>Wklej zwykłym <strong>Ctrl+V</strong> — stopka pojawi się od razu sformatowana.</li>
-        </ol>
+        <div style="padding: 0.6rem 0.75rem; background: #f0fdfb; border-radius: 8px; border-left: 4px solid var(--primary); font-size: 0.9rem; line-height: 1.5;">
+          <strong>📋 Kopiuj efekt końcowy</strong> — do <strong>Outlooka / Gmaila / Apple Mail</strong>. Potem wklej zwykłym <strong>Ctrl+V</strong>.
+        </div>
         
-        <p style="margin: 0; padding: 0.6rem 0.75rem; background: #fce4ec; border-radius: 8px; font-size: 0.85rem; line-height: 1.5;">
-          <strong style="color: #c2185b;">🔧 Zoho CRM:</strong> po skopiowaniu użyj w edytorze opcji <strong>„Wklej jako HTML / kod źródłowy”</strong> (&lt;/&gt;).
+        <p style="margin: 0; padding: 0.6rem 0.75rem; background: #fce4ec; border-radius: 8px; border-left: 4px solid #e91e63; font-size: 0.9rem; line-height: 1.5;">
+          <strong>&lt;/&gt; Kopiuj kod HTML</strong> — do <strong>Zoho CRM</strong> / edytora HTML. Użyj opcji <strong>„Wklej jako HTML"</strong> (&lt;/&gt;).
         </p>
       </div>
       
@@ -804,7 +797,8 @@
     const GENERATOR_KEY = "b752cb063ef8f97a1959ff5c56a06b5e";
     
     const outputEl = document.getElementById("output");
-    const copyBtn = document.getElementById("copyBtn");
+    const copyEffectBtn = document.getElementById("copyEffectBtn");
+    const copyHtmlBtn = document.getElementById("copyHtmlBtn");
     const form = document.getElementById("signatureForm");
     const greetingSelect = document.getElementById("greeting");
     const customGreetingWrapper = document.getElementById("customGreetingWrapper");
@@ -1467,9 +1461,10 @@ ${linkedin ? `<a href="${linkedin}" title="${linkedin}" style="text-decoration:n
       const previewEl = document.getElementById("preview");
       previewEl.innerHTML = signatureHtml;
       
-      copyBtn.disabled = false;
-      copyBtn.classList.remove("secondary");
-      copyBtn.classList.add("primary");
+      copyEffectBtn.disabled = false;
+      copyHtmlBtn.disabled = false;
+      copyEffectBtn.classList.remove("secondary");
+      copyEffectBtn.classList.add("primary");
       // Nie blokuj ponownego generowania — użytkownik może generować wielokrotnie
       
       return true;
@@ -1559,18 +1554,17 @@ ${linkedin ? `<a href="${linkedin}" title="${linkedin}" style="text-decoration:n
     const resetButtons = () => {
       if (outputEl.value) {
         const submitBtn = form.querySelector('button[type="submit"]');
-        const copyBtn = document.getElementById("copyBtn");
-        const pasteInstruction = document.getElementById("pasteInstruction");
+        const copyEffectBtn = document.getElementById("copyEffectBtn");
+        const copyHtmlBtn = document.getElementById("copyHtmlBtn");
         
         submitBtn.disabled = false;
         submitBtn.classList.remove("secondary");
         submitBtn.classList.add("primary");
-        copyBtn.disabled = true;
-        copyBtn.classList.remove("primary");
-        copyBtn.classList.add("secondary");
+        [copyEffectBtn, copyHtmlBtn].forEach(b => { if (b) b.disabled = true; });
+        copyEffectBtn.classList.remove("primary");
+        copyEffectBtn.classList.add("secondary");
         
-        // Ukryj instrukcję (pokaże się znowu po regenerowaniu)
-        if (pasteInstruction) pasteInstruction.style.display = "none";
+        // Po regenerowaniu znów trzeba skopiować
       }
     };
     const formInputs = form.querySelectorAll('input:not([type="file"]):not([type="hidden"]), select');
@@ -1583,15 +1577,19 @@ ${linkedin ? `<a href="${linkedin}" title="${linkedin}" style="text-decoration:n
       bannerGalleryEl.addEventListener('click', resetButtons);
     }
 
-    copyBtn.addEventListener("click", async () => {
+    // Krótka informacja zwrotna na przycisku po kliknięciu
+    const flashCopyBtn = (btn, ok, label) => {
+      btn.textContent = ok ? "Skopiowano! ✓" : "Nie udało się";
+      setTimeout(() => { btn.textContent = label; }, 2200);
+    };
+
+    // „Kopiuj efekt końcowy" — gotowa, sformatowana stopka do zwykłego Ctrl+V.
+    // Kopiuje czysty kod stopki jako HTML (bez szarego tła podglądu).
+    copyEffectBtn.addEventListener("click", async () => {
       const html = outputEl.value.trim();
       if (!html) return;
       const previewEl = document.getElementById("preview");
       let ok = false;
-
-      // 1) Wrzuć gotową stopkę do schowka jako HTML — zwykły Ctrl+V w edytorze
-      //    podpisu wklei ją od razu sformatowaną (bez ręcznego zaznaczania
-      //    i bez szarego tła podglądu).
       try {
         if (navigator.clipboard && window.ClipboardItem) {
           await navigator.clipboard.write([new ClipboardItem({
@@ -1600,10 +1598,9 @@ ${linkedin ? `<a href="${linkedin}" title="${linkedin}" style="text-decoration:n
           })]);
           ok = true;
         }
-      } catch (e) { /* metoda zapasowa niżej */ }
-
-      // 2) Zapas (iframe Zoho CRM, starsze przeglądarki): zaznacz podgląd
-      //    na białym tle i skopiuj jako HTML przez execCommand.
+      } catch (e) { /* zapas niżej */ }
+      // Zapas (iframe Zoho CRM, starsze przeglądarki): zaznacz podgląd na
+      // białym tle i skopiuj jako HTML przez execCommand.
       if (!ok && previewEl) {
         try {
           const prevBg = previewEl.style.background;
@@ -1616,21 +1613,29 @@ ${linkedin ? `<a href="${linkedin}" title="${linkedin}" style="text-decoration:n
           ok = document.execCommand("copy");
           sel.removeAllRanges();
           previewEl.style.background = prevBg;
-        } catch (e) { /* ostatnia metoda niżej */ }
+        } catch (e) { /* nic */ }
       }
+      flashCopyBtn(copyEffectBtn, ok, "📋 Kopiuj efekt końcowy");
+    });
 
-      // 3) Ostatecznie: kod źródłowy jako zwykły tekst.
-      if (!ok) {
+    // „Kopiuj kod HTML" — surowy kod źródłowy jako zwykły tekst
+    // (do „Wklej jako HTML" / Zoho CRM).
+    copyHtmlBtn.addEventListener("click", async () => {
+      const html = outputEl.value.trim();
+      if (!html) return;
+      let ok = false;
+      try {
+        await navigator.clipboard.writeText(html);
+        ok = true;
+      } catch (e) {
         try {
           outputEl.style.display = "block";
           outputEl.select();
           ok = document.execCommand("copy");
           outputEl.style.display = "none";
-        } catch (e) { /* nic */ }
+        } catch (e2) { /* nic */ }
       }
-
-      copyBtn.textContent = ok ? "Skopiowano! ✓" : "Nie udało się — zaznacz ręcznie";
-      setTimeout(() => { copyBtn.textContent = "📋 Kopiuj stopkę"; }, 2200);
+      flashCopyBtn(copyHtmlBtn, ok, "</> Kopiuj kod HTML");
     });
 
     // Sekcje: na starcie otwarty tylko Krok 1; dalej użytkownik sam otwiera/zamyka (bez auto-zamykania innych)
