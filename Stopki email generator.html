@@ -662,11 +662,6 @@
             <button type="button" class="secondary" id="resetPhoto" disabled>Wyczyść</button>
             <button type="button" class="primary" id="downloadPhoto" disabled>Pobierz zdjęcie</button>
           </div>
-          <label style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; font-weight: normal !important; cursor: pointer; background: none !important; -webkit-text-fill-color: #333 !important; color: #333 !important;">
-            <input type="checkbox" id="photoRing" checked style="width: 18px; height: 18px; cursor: pointer;">
-            <span style="color: #333 !important; background: none !important; -webkit-text-fill-color: #333 !important;">Obwódka wokół zdjęcia w stopce</span>
-          </label>
-
           <div class="image-actions" style="margin-top: 0.5rem;">
             <button type="button" class="secondary action-btn" id="confirmPhotoCrop" disabled><span class="key-badge">B</span>Zatwierdź kadr</button>
             <div id="photoCropStatus" class="hint" style="margin: 0;">Status kadru: brak zdjęcia</div>
@@ -831,6 +826,15 @@
                 </div>
               </span>
             </label>
+          </div>
+
+          <!-- Ustawienie wspólne dla obu wersji -->
+          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+            <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0; font-weight: normal !important; cursor: pointer; background: none !important; -webkit-text-fill-color: #333 !important; color: #333 !important;">
+              <input type="checkbox" id="photoRing" checked style="width: 18px; height: 18px; cursor: pointer;">
+              <span style="color: #333 !important; background: none !important; -webkit-text-fill-color: #333 !important;">Obwódka wokół zdjęcia</span>
+            </label>
+            <div class="hint" style="margin-top: 0.35rem;">Cienkie kółko w kolorze marki wokół zdjęcia. Działa w obu wersjach.</div>
           </div>
         </div>
       </section>
@@ -1455,6 +1459,7 @@
             card.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.18)';
             selectedBannerUrl = banner.url;
             selectedBannerLink = banner.link || getBrand().defaultBannerLink; // Link z config lub domyślny
+            przejdzDoKroku("step4-version");
           }
         });
         
@@ -1955,6 +1960,9 @@ ${linkedin ? `<a href="${linkedin}" title="${linkedin}" style="text-decoration:n
       
       // Pokaż modal z instrukcjami
       await showInstructionModal();
+
+      // Po zamknięciu instrukcji kursor ląduje na przycisku kopiowania
+      przejdzDoKroku("panelPreview");
     });
 
     // Live preview - generuj przy każdej zmianie
@@ -2073,11 +2081,55 @@ ${linkedin ? `<a href="${linkedin}" title="${linkedin}" style="text-decoration:n
         if (!header) return;
 
         header.addEventListener('click', () => {
+          const otwieraSie = !card.classList.contains('is-open');
           card.classList.toggle('is-open');
+          if (otwieraSie) focusStep(card.id);
         });
       });
     };
+
+    // Pierwszy element do zaznaczenia w każdym kroku — to on dostaje kursor,
+    // gdy krok się otwiera albo gdy poprzedni został zatwierdzony.
+    const PIERWSZY_WYBOR = {
+      "step1-photo": "#triggerFileInput",
+      "step2-data": "#greeting",
+      "step3-banner": '#bannerGallery input[type="radio"]',
+      "step4-version": "#sigVariantBasic",
+      "step5-generate": 'button[type="submit"]',
+      "panelPreview": "#copyEffectBtn",
+    };
+
+    const wWidoku = (el) => {
+      const r = el.getBoundingClientRect();
+      return r.top >= 0 && r.top < window.innerHeight * 0.75;
+    };
+
+    // Ustawia kursor na pierwszym wyborze w kroku. Przewija tylko wtedy, gdy
+    // krok jest poza ekranem — inaczej strona skakałaby przy każdym kliknięciu.
+    const focusStep = (id) => {
+      const card = document.getElementById(id);
+      if (!card) return;
+      // Zawartość zwiniętego kroku ma display:none, więc focus by nie zadziałał
+      setTimeout(() => {
+        const cel = card.querySelector(PIERWSZY_WYBOR[id] || 'input, select, textarea, button');
+        if (cel && !cel.disabled) cel.focus({ preventScroll: true });
+        if (!wWidoku(card)) card.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 0);
+    };
+
+    // Zatwierdzenie kroku otwiera następny i przenosi do niego kursor
+    const przejdzDoKroku = (id) => {
+      const card = document.getElementById(id);
+      if (!card) return;
+      card.classList.add('is-open');
+      focusStep(id);
+    };
     setupStepCardAccordion();
+
+    // Wybór wersji BASIC/FULL domyka Krok 4 — prowadzimy do przycisku generowania
+    document.querySelectorAll('input[name="signatureVariant"]').forEach((radio) => {
+      radio.addEventListener("change", () => przejdzDoKroku("step5-generate"));
+    });
 
     // Generuje dataURL ze zdjęcia na canvasie (do podglądu lokalnego)
     const getPhotoDataURLFromCanvas = () => {
@@ -2199,6 +2251,17 @@ ${linkedin ? `<a href="${linkedin}" title="${linkedin}" style="text-decoration:n
 
       setCropStatus("Status kadru: zatwierdzony ✅ — wybierz tryb zdjęcia", "#15803d");
       updatePhotoSummary();
+
+      // Następny wybór to wciąż Krok 1: tryb zdjęcia. Bez niego generator
+      // i tak zatrzyma się później z ostrzeżeniem, więc prowadzimy tam kursor.
+      setTimeout(() => {
+        const tryb = document.getElementById("photoModeManual");
+        if (tryb && !tryb.disabled) {
+          tryb.focus({ preventScroll: true });
+          const karta = document.getElementById("photoModeSelector");
+          if (karta && !wWidoku(karta)) karta.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 0);
     };
 
     // Obsługa przełączania trybów zdjęcia
@@ -2229,8 +2292,16 @@ ${linkedin ? `<a href="${linkedin}" title="${linkedin}" style="text-decoration:n
         updatePhotoSummary();
       };
 
-      if (photoModeManual) photoModeManual.addEventListener("change", updateModeUI);
-      if (photoModeAuto) photoModeAuto.addEventListener("change", updateModeUI);
+      // Wybór trybu domyka Krok 1 — dalej idziemy do danych osobowych
+      const przejdzDoDanych = () => przejdzDoKroku("step2-data");
+      if (photoModeManual) {
+        photoModeManual.addEventListener("change", updateModeUI);
+        photoModeManual.addEventListener("change", przejdzDoDanych);
+      }
+      if (photoModeAuto) {
+        photoModeAuto.addEventListener("change", updateModeUI);
+        photoModeAuto.addEventListener("change", przejdzDoDanych);
+      }
       
       // Kliknięcie w kartę też przełącza radio
       if (modeManualCard && photoModeManual) {
