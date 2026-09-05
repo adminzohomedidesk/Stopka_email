@@ -502,8 +502,8 @@
 </head>
 <body>
   <h1>
-    <img src="https://raw.githubusercontent.com/adminzohomedidesk/Stopka_email/main/20251001%20MD%20fav.png" alt="Medidesk" class="logo" />
-    Generator stopki Medidesk
+    <img id="headerLogo" src="https://raw.githubusercontent.com/adminzohomedidesk/Stopka_email/main/20251001%20MD%20fav.png" alt="Medidesk" class="logo" />
+    <span id="headerTitle">Generator stopki Medidesk</span>
     <a href="admin.html" title="Zarządzanie bannerami" style="margin-left:auto;display:flex;align-items:center;text-decoration:none;color:#9ca3af;font-size:0.8rem;gap:5px;font-weight:400;transition:color 0.2s;" onmouseover="this.style.color='#6366f1'" onmouseout="this.style.color='#9ca3af'">
       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       Ustawienia
@@ -634,19 +634,16 @@
             LinkedIn (opcjonalnie)
             <input id="linkedin" placeholder="https://www.linkedin.com/in/..." style="font-style: italic;" />
           </label>
+          <!-- Wybór marki — ustala dane spółki, kolory, bannery w Kroku 3 i listę linków niżej -->
+          <label style="margin-bottom: 0.5rem;">
+            Marka <span style="color: #d32f2f;">*</span>
+          </label>
+          <div id="brandSelector" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0.5rem; margin-bottom: 1rem;"></div>
+
           <label style="margin-bottom: 0.5rem;">
             Link pod adresem
           </label>
-          <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 1rem;">
-            <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: normal !important; cursor: pointer; background: none !important; -webkit-text-fill-color: #333 !important; color: #333 !important;">
-              <input type="checkbox" id="linkMedidesk" value="medidesk" checked style="width: 18px; height: 18px; cursor: pointer;">
-              <span style="color: #333 !important; background: none !important; -webkit-text-fill-color: #333 !important;">medidesk.com</span>
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: normal !important; cursor: pointer; background: none !important; -webkit-text-fill-color: #333 !important; color: #333 !important;">
-              <input type="checkbox" id="linkEdu" value="edu" style="width: 18px; height: 18px; cursor: pointer;">
-              <span style="color: #333 !important; background: none !important; -webkit-text-fill-color: #333 !important;">medidesk.edu.pl</span>
-            </label>
-          </div>
+          <div id="siteLinksBox" style="display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 1rem;"></div>
         </div>
       </section>
 
@@ -808,10 +805,175 @@
     let selectedBannerLink = ""; // Link docelowy dla wybranego bannera
     let uploadedPhotoUrl = ""; // URL wgranego zdjęcia z serwera
     let isPhotoCropConfirmed = false; // czy użytkownik zatwierdził kadr zdjęcia (wymagane dla publikacji)
-    const LI_ICON_DATA = "https://raw.githubusercontent.com/adminzohomedidesk/Stopka_email/main/li_mini.png";
-    const WEB_ICON_DATA = "https://raw.githubusercontent.com/adminzohomedidesk/Stopka_email/main/web_mini.png";
-    const PHONE_ICON_DATA = "https://raw.githubusercontent.com/adminzohomedidesk/Stopka_email/main/phone_mini.png";
-    const MAIL_ICON_DATA = "https://raw.githubusercontent.com/adminzohomedidesk/Stopka_email/main/mail_mini.png";
+    // === MARKI ===
+    // Wszystko, co różni Medidesk od Vetidesku, siedzi w tej jednej tabeli.
+    // Zmiana numeru, adresu, koloru czy linku = jedna poprawka tutaj,
+    // a nie szukanie po kilkunastu miejscach w szablonach stopki.
+    const RAW = "https://raw.githubusercontent.com/adminzohomedidesk/Stopka_email/main";
+
+    const BRANDS = {
+      medidesk: {
+        key: "medidesk",
+        name: "Medidesk",
+        note: "dla placówek medycznych",
+        logo: `${RAW}/20251001%20MD%20fav.png`,
+        accent: "#0074d7",      // imię, kreska pod imieniem, separatory „|”
+        linkColor: "#00cca3",   // telefon, e-mail, LinkedIn, linki w „Obserwuj nas”
+        company: "Medidesk Sp. z o.o.",
+        legal: "Medidesk Sp. z o. o. | NIP: 701-065-95-20 | KRS: 0000659580 | REGON: 366382110",
+        street: "ul. W. Niegolewskiego 17/2",
+        city: "01-570 Warszawa",
+        phoneText: "22 250 08 50",
+        phoneHref: "+48222500850",
+        emailPlaceholder: "imię.nazwisko@medidesk.com",
+        siteLinks: [
+          { id: "linkMedidesk", label: "medidesk.com", href: "https://medidesk.pl/", title: "medidesk.pl", checked: true },
+          { id: "linkEdu", label: "medidesk.edu.pl", href: "https://medidesk.edu.pl/", title: "medidesk.edu.pl", checked: false },
+        ],
+        social: [
+          { label: "Facebook", href: "https://www.facebook.com/medideskpl/" },
+          { label: "Linkedin", href: "https://www.linkedin.com/company/18386183/" },
+        ],
+        icons: { phone: `${RAW}/phone_mini.png`, mail: `${RAW}/mail_mini.png`, li: `${RAW}/li_mini.png` },
+        banners: { akcja: "banner_akcja_1.png", email: "banner_email_1.png" },
+        defaultBannerLink: "https://medidesk.pl",
+        siteName: "medidesk.pl",
+        siteUrl: "https://medidesk.pl",
+        privacyUrl: "https://medidesk.pl/polityka-prywatnosci/",
+        rodoAdmin: "Medidesk Sp. z o.o. z siedzibą w Warszawie 01-570, ul. Władysława Niegolewskiego 17/2",
+        // Osobny obowiązek informacyjny dla profilu na Facebooku — Vetidesk go nie ma.
+        rodoFacebookUrl: "https://medidesk.pl/obowiazek-informacyjny-rodo-facebook/",
+      },
+      vetidesk: {
+        key: "vetidesk",
+        name: "Vetidesk",
+        note: "dla lecznic weterynaryjnych",
+        logo: `${RAW}/vetidesk_fav.png`,
+        accent: "#0A7DF6",
+        linkColor: "#0A7DF6",
+        company: "Vetidesk Sp. z o.o.",
+        legal: "Vetidesk Sp. z o. o. | NIP: 5252907021 | KRS: 0000971087 | REGON: 521992107",
+        street: "ul. W. Niegolewskiego 17/2",
+        city: "01-570 Warszawa",
+        phoneText: "22 250 08 50",
+        phoneHref: "+48222500850",
+        emailPlaceholder: "imię.nazwisko@vetidesk.com",
+        siteLinks: [
+          { id: "linkVetidesk", label: "vetidesk.com", href: "https://vetidesk.com/", title: "vetidesk.com", checked: true },
+        ],
+        social: [
+          { label: "Facebook", href: "https://www.facebook.com/vetidesk/" },
+          // LinkedIn Vetidesku jeszcze nie ma — dopisz tu, gdy powstanie
+        ],
+        icons: { phone: `${RAW}/phone_mini_vet.png`, mail: `${RAW}/mail_mini_vet.png`, li: `${RAW}/li_mini_vet.png` },
+        banners: { akcja: "banner_vet_akcja_1.png", email: "banner_vet_email_1.png" },
+        defaultBannerLink: "https://vetidesk.com",
+        siteName: "vetidesk.com",
+        siteUrl: "https://vetidesk.com",
+        privacyUrl: "https://vetidesk.com/privacy-policy",
+        rodoAdmin: "Vetidesk Sp. z o.o. z siedzibą w Warszawie 01-570, ul. Władysława Niegolewskiego 17/2",
+        rodoFacebookUrl: "",
+      },
+    };
+
+    // Aktualnie wybrana marka (ustawiana w Kroku 2)
+    let currentBrandKey = "medidesk";
+    const getBrand = () => BRANDS[currentBrandKey] || BRANDS.medidesk;
+
+    // --- Krok 2: karty wyboru marki i lista linków „Link pod adresem" ---
+    const brandSelector = document.getElementById("brandSelector");
+    const siteLinksBox = document.getElementById("siteLinksBox");
+    const headerLogo = document.getElementById("headerLogo");
+    const headerTitle = document.getElementById("headerTitle");
+
+    // Checkboxy adresów www zależą od marki, więc powstają dynamicznie.
+    // buildSignature() czyta je po klasie .site-link-cb i danych w dataset.
+    const renderSiteLinks = () => {
+      const b = getBrand();
+      siteLinksBox.innerHTML = "";
+      b.siteLinks.forEach((l) => {
+        const label = document.createElement("label");
+        label.style.cssText = "display: flex; align-items: center; gap: 0.5rem; font-weight: normal !important; cursor: pointer; background: none !important; -webkit-text-fill-color: #333 !important; color: #333 !important;";
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.id = l.id;
+        cb.className = "site-link-cb";
+        cb.checked = l.checked;
+        cb.dataset.href = l.href;
+        cb.dataset.title = l.title;
+        cb.dataset.label = l.label;
+        cb.style.cssText = "width: 18px; height: 18px; cursor: pointer;";
+        const span = document.createElement("span");
+        span.style.cssText = "color: #333 !important; background: none !important; -webkit-text-fill-color: #333 !important;";
+        span.textContent = l.label;
+        label.appendChild(cb);
+        label.appendChild(span);
+        siteLinksBox.appendChild(label);
+      });
+    };
+
+    const paintBrandCards = () => {
+      document.querySelectorAll(".brand-card").forEach((c) => {
+        const active = c.dataset.brand === currentBrandKey;
+        c.style.borderColor = active ? BRANDS[c.dataset.brand].accent : "#e5e7eb";
+        c.style.background = active ? "#f2f8ff" : "#fafafa";
+      });
+    };
+
+    const renderBrandSelector = () => {
+      brandSelector.innerHTML = "";
+      Object.values(BRANDS).forEach((b) => {
+        const card = document.createElement("label");
+        card.className = "brand-card";
+        card.dataset.brand = b.key;
+        card.style.cssText = "display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem; background: #fafafa; border-radius: 8px; border: 2px solid #e5e7eb; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.08); font-weight: normal !important; margin: 0; color: #333 !important; -webkit-text-fill-color: #333 !important; transition: all 0.2s;";
+
+        const radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = "brandChoice";
+        radio.value = b.key;
+        radio.checked = b.key === currentBrandKey;
+        radio.style.cssText = "width: 20px; height: 20px; cursor: pointer; flex-shrink: 0; margin: 0;";
+
+        const logo = document.createElement("img");
+        logo.src = b.logo;
+        logo.alt = b.name;
+        logo.style.cssText = "width: 28px; height: 28px; object-fit: contain; flex-shrink: 0;";
+
+        const txt = document.createElement("span");
+        txt.style.cssText = "line-height: 1.3; color: #333 !important; -webkit-text-fill-color: #333 !important;";
+        txt.innerHTML = `<strong>${b.name}</strong><br><span style="font-size: 0.8rem; color: #666 !important; -webkit-text-fill-color: #666 !important;">${b.note}</span>`;
+
+        card.appendChild(radio);
+        card.appendChild(logo);
+        card.appendChild(txt);
+        radio.addEventListener("change", () => { if (radio.checked) selectBrand(b.key); });
+        brandSelector.appendChild(card);
+      });
+      paintBrandCards();
+    };
+
+    // Zmiana marki przestawia nagłówek, linki, podpowiedź e-maila i galerię bannerów.
+    // Wybrany wcześniej banner należy do poprzedniej marki, więc go czyścimy.
+    const selectBrand = (key) => {
+      if (!BRANDS[key]) return;
+      currentBrandKey = key;
+      const b = getBrand();
+
+      paintBrandCards();
+      renderSiteLinks();
+
+      const emailInput = document.getElementById("email");
+      if (emailInput) emailInput.placeholder = b.emailPlaceholder;
+      if (headerLogo) { headerLogo.src = b.logo; headerLogo.alt = b.name; }
+      if (headerTitle) headerTitle.textContent = `Generator stopki ${b.name}`;
+      document.title = `Generator stopki ${b.name}`;
+
+      selectedBannerUrl = "";
+      selectedBannerLink = "";
+      loadBanners();
+      setCopyButtonsEnabled(false);
+    };
     
     // --- Zmienne canvasa (deklarowane wcześnie dla dostępu z funkcji) ---
     const photoInput = document.getElementById("photoInput");
@@ -960,11 +1122,16 @@
 
     // Banner gallery - check which banners exist and display them
     const loadBanners = async () => {
-      const baseUrlPromo = "https://raw.githubusercontent.com/adminzohomedidesk/Stopka_email/main/banner_akcja_";
-      const baseUrlClassic = "https://raw.githubusercontent.com/adminzohomedidesk/Stopka_email/main/banner_email_";
+      const brand = getBrand();
+      // Każda marka ma własną parę plików. Banner, którego jeszcze nie ma w repo
+      // (np. akcja Vetidesku), po prostu nie pojawi się na liście — sprawdzamy HEAD-em.
+      const urlPromo = `${RAW}/${brand.banners.akcja}`;
+      const urlClassic = `${RAW}/${brand.banners.email}`;
       const promoBanners = [];
       const classicBanners = [];
-      
+
+      bannerGallery.innerHTML = '<span style="color: var(--gray); font-size: 0.85rem; text-align: center;">Ładowanie dostępnych bannerów...</span>';
+
       // Pobierz konfigurację linków z GitHuba
       let bannerConfig = {};
       try {
@@ -981,24 +1148,20 @@
       const cacheBust = `?t=${Date.now()}`;
 
       // Check promo banner (tylko 1)
-      const urlPromo = `${baseUrlPromo}1.png`;
       try {
         const response = await fetch(urlPromo + cacheBust, { method: 'HEAD' });
         if (response.ok) {
-          const bannerFileName = "banner_akcja_1.png";
-          const link = bannerConfig[bannerFileName]?.link || "https://medidesk.pl";
+          const link = bannerConfig[brand.banners.akcja]?.link || brand.defaultBannerLink;
           // url - czysty (idzie do stopki), displayUrl - z cache-bust (do podglądu)
           promoBanners.push({ url: urlPromo, displayUrl: urlPromo + cacheBust, number: 1, type: 'akcja', link: link });
         }
       } catch (e) {}
 
       // Check classic banner (tylko 1)
-      const urlClassic = `${baseUrlClassic}1.png`;
       try {
         const response = await fetch(urlClassic + cacheBust, { method: 'HEAD' });
         if (response.ok) {
-          const bannerFileName = "banner_email_1.png";
-          const link = bannerConfig[bannerFileName]?.link || "https://medidesk.pl";
+          const link = bannerConfig[brand.banners.email]?.link || brand.defaultBannerLink;
           classicBanners.push({ url: urlClassic, displayUrl: urlClassic + cacheBust, number: 1, type: 'email', link: link });
         }
       } catch (e) {}
@@ -1006,7 +1169,7 @@
       const allBanners = [...promoBanners, ...classicBanners];
       
       if (allBanners.length === 0) {
-        bannerGallery.innerHTML = '<span style="color: #d32f2f; font-size: 0.85rem; grid-column: 1/-1; text-align: center;">⚠️ Brak dostępnych bannerów w repozytorium.</span>';
+        bannerGallery.innerHTML = `<span style="color: #d32f2f; font-size: 0.85rem; grid-column: 1/-1; text-align: center;">⚠️ Brak bannerów dla marki ${brand.name} w repozytorium.</span>`;
         return;
       }
       
@@ -1017,7 +1180,7 @@
       if (promoBanners.length > 0) {
         const promoHeader = document.createElement('h3');
         promoHeader.textContent = 'Promowana akcja';
-        promoHeader.style.cssText = 'grid-column: 1/-1; color: var(--primary-dark); font-size: 0.95rem; margin: 0.5rem 0 0.25rem; font-weight: 600;';
+        promoHeader.style.cssText = `grid-column: 1/-1; color: ${brand.accent}; font-size: 0.95rem; margin: 0.5rem 0 0.25rem; font-weight: 600;`;
         bannerGallery.appendChild(promoHeader);
       }
       
@@ -1029,7 +1192,7 @@
       if (classicBanners.length > 0) {
         const classicHeader = document.createElement('h3');
         classicHeader.textContent = 'Klasyczne';
-        classicHeader.style.cssText = 'grid-column: 1/-1; color: var(--primary-dark); font-size: 0.95rem; margin: 0.75rem 0 0.25rem; font-weight: 600;';
+        classicHeader.style.cssText = `grid-column: 1/-1; color: ${brand.accent}; font-size: 0.95rem; margin: 0.75rem 0 0.25rem; font-weight: 600;`;
         bannerGallery.appendChild(classicHeader);
       }
       
@@ -1072,16 +1235,19 @@
           
           // Mark this card as selected
           if (radio.checked) {
-            card.style.borderColor = '#00bfa5';
-            card.style.boxShadow = '0 4px 12px rgba(0, 191, 165, 0.3)';
+            card.style.borderColor = getBrand().accent;
+            card.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.18)';
             selectedBannerUrl = banner.url;
-            selectedBannerLink = banner.link || "https://medidesk.pl"; // Link z config lub domyślny
+            selectedBannerLink = banner.link || getBrand().defaultBannerLink; // Link z config lub domyślny
           }
         });
         
         return card;
     };
     
+    // Start: narysuj karty marek i linki, potem pobierz bannery wybranej marki.
+    renderBrandSelector();
+    renderSiteLinks();
     loadBanners();
 
     // Przyciski kopiowania są aktywne tylko wtedy, gdy w outputEl leży
@@ -1103,10 +1269,9 @@
       let phone = document.getElementById("phone").value.trim();
       let email = document.getElementById("email").value.trim();
       let linkedin = document.getElementById("linkedin").value.trim();
-      const linkMedidesk = document.getElementById("linkMedidesk").checked;
-      const linkEdu = document.getElementById("linkEdu").checked;
+      const B = getBrand(); // dane spółki, kolory i ikonki wybranej marki
       const bannerUrl = selectedBannerUrl;
-      const bannerLink = selectedBannerLink || "https://medidesk.pl"; // Link z konfiguracji lub domyślny
+      const bannerLink = selectedBannerLink || B.defaultBannerLink; // Link z konfiguracji lub domyślny
 
       // Zdjęcie: jeśli brak URL z serwera, użyj base64 z canvasa (tryb ręczny)
       const photoSrc = uploadedPhotoUrl || (isPhotoCropConfirmed ? getPhotoDataURLFromCanvas() : null) || '[WSTAW_ZDJECIE]';
@@ -1183,15 +1348,31 @@
         return false;
       }
 
-      // Generuj linki w sekcji "Obserwuj nas"
-      let observeLinks = '';
-      if (linkMedidesk && linkEdu) {
-        observeLinks = '<a href="https://medidesk.pl/" title="medidesk.pl" style="text-decoration:none !important; color: #00cca3 !important; border: none">medidesk.com</a> <span style="color: #00cca3 !important">|</span> <a href="https://medidesk.edu.pl/" title="medidesk.edu.pl" style="text-decoration:none !important; color: #00cca3 !important; border: none">medidesk.edu.pl</a> <span style="color: #00cca3 !important">|</span> ';
-      } else if (linkMedidesk) {
-        observeLinks = '<a href="https://medidesk.pl/" title="medidesk.pl" style="text-decoration:none !important; color: #00cca3 !important; border: none">medidesk.com</a> <span style="color: #00cca3 !important">|</span> ';
-      } else if (linkEdu) {
-        observeLinks = '<a href="https://medidesk.edu.pl/" title="medidesk.edu.pl" style="text-decoration:none !important; color: #00cca3 !important; border: none">medidesk.edu.pl</a> <span style="color: #00cca3 !important">|</span> ';
-      }
+      // Sekcja „Obserwuj nas”: zaznaczone adresy www marki, po nich jej profile
+      // społecznościowe. Gdy nic nie zostaje (Vetidesk nie ma profili, a użytkownik
+      // odznaczył adres) — cały wiersz znika, żeby nie zostawiać samego dwukropka.
+      const followSep = `<span style="color: ${B.linkColor} !important">|</span>`;
+      const followStyle = `text-decoration:none !important; color: ${B.linkColor} !important; border: none`;
+      const followParts = [];
+      document.querySelectorAll(".site-link-cb").forEach((cb) => {
+        if (cb.checked) {
+          followParts.push(`<a href="${cb.dataset.href}" title="${cb.dataset.title}" style="${followStyle}">${cb.dataset.label}</a>`);
+        }
+      });
+      B.social.forEach((s) => {
+        followParts.push(`<a href="${s.href}" title="${s.label}" style="${followStyle}">${s.label}</a>`);
+      });
+      const followLine = followParts.join(` ${followSep} `);
+
+      // Obowiązek informacyjny dla profilu na Facebooku dotyczy tylko marki, która ten profil ma.
+      const rodoFacebookBasic = B.rodoFacebookUrl ? `
+        <div style="margin-top:8px; color:#8f8f8f; font-size:9px; line-height:14px; font-weight:700;">
+          Administratorem Twoich danych osobowych w związku z Twoją aktywnością na naszym profilu firmowym Facebook jest ${B.company} W celu zapoznania się z obowiązkiem informacyjnym w zakresie przetwarzania Twoich danych osobowych przez ${B.company} i Facebook Inc. <a href="${B.rodoFacebookUrl}" style="text-decoration:underline; color:#8f8f8f;">kliknij tu</a>.
+        </div>` : '';
+      const rodoFacebookFull = B.rodoFacebookUrl ? `
+                            <p style="margin: 8px 0 0; padding: 0; font-family: 'EuclidCircularB', Arial, sans-serif; font-size: 9px; font-weight: 700; line-height: 14px">
+                                Administratorem Twoich danych osobowych w związku z Twoją aktywnością na naszym profilu firmowym Facebook jest ${B.company} W celu zapoznania się z obowiązkiem informacyjnym w zakresie przetwarzania Twoich danych osobowych przez ${B.company} i Facebook Inc. <a href="${B.rodoFacebookUrl}" title="Obowiązek informacyjny RODO – Facebook" style="text-decoration:underline !important; color: #8f8f8f; border: none;">kliknij tu</a>.
+                            </p>` : '';
 
       // Blok pożegnania — pomijany całkowicie (bez samotnego przecinka), gdy wybrano „Brak zwrotu pożegnalnego”
       const greetingBlockBasic = greeting ? `<div style="margin: 0 0 6px 0;">${greeting},</div>` : '';
@@ -1209,49 +1390,46 @@
       <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;">
         <tr>
           <td width="120" valign="top" style="width:120px; padding:0 10px 0 0; vertical-align: top;">
-            <img src="${photoSrc}" alt="${fullName}" width="109" height="109" style="display:block; width:109px; height:109px; border:1px solid #0074d7; border-radius:50%; object-fit:cover;" />
+            <img src="${photoSrc}" alt="${fullName}" width="109" height="109" style="display:block; width:109px; height:109px; border:1px solid ${B.accent}; border-radius:50%; object-fit:cover;" />
           </td>
           <td width="440" valign="top" style="width:440px; vertical-align: top;">
-            <div style="margin:0; padding:0; font-size:14px; font-weight:700; color:#0074d7;">${fullName}</div>
+            <div style="margin:0; padding:0; font-size:14px; font-weight:700; color:${B.accent};">${fullName}</div>
             ${role ? `<div style="margin:0; padding:0; font-size:14px; font-weight:500; color:#333333;">${role}</div>` : ''}
-            <div style="height:3px; width:90px; background:#0074d7; margin:8px 0;"></div>
-            ${phone ? `<div style="margin:0; padding:0;"><span style="color:#333333;">tel: </span><a href="tel:${phone.replace(/\s/g, '')}" style="text-decoration:none; color:#00cca3;">${phone}</a></div>` : ''}
-            <div style="margin:0; padding:0;"><span style="color:#333333;">email: </span><a href="mailto:${email}" style="text-decoration:none; color:#00cca3;">${email}</a></div>
-            ${linkedin ? `<div style="margin:0; padding:0;"><span style="color:#333333;">LI: </span><a href="${linkedin}" style="text-decoration:none; color:#00cca3; font-weight:400;">dodaj mnie na LinkedIn</a></div>` : ''}
+            <div style="height:3px; width:90px; background:${B.accent}; margin:8px 0;"></div>
+            ${phone ? `<div style="margin:0; padding:0;"><span style="color:#333333;">tel: </span><a href="tel:${phone.replace(/\s/g, '')}" style="text-decoration:none; color:${B.linkColor};">${phone}</a></div>` : ''}
+            <div style="margin:0; padding:0;"><span style="color:#333333;">email: </span><a href="mailto:${email}" style="text-decoration:none; color:${B.linkColor};">${email}</a></div>
+            ${linkedin ? `<div style="margin:0; padding:0;"><span style="color:#333333;">LI: </span><a href="${linkedin}" style="text-decoration:none; color:${B.linkColor}; font-weight:400;">dodaj mnie na LinkedIn</a></div>` : ''}
           </td>
         </tr>
       </table>
       <div style="margin-top: 10px;">
         <div style="margin:0; padding:0;">
-          Medidesk Sp. z o.o. <span style="color:#0074d7; font-weight:700;">|</span>
-          ul. W. Niegolewskiego 17/2 <span style="color:#0074d7; font-weight:700;">|</span>
-          01-570 Warszawa <span style="color:#0074d7; font-weight:700;">|</span>
-          tel. <a href="tel:+48222500850" style="text-decoration:none; color:#333333;">22 250 08 50</a>
+          ${B.company} <span style="color:${B.accent}; font-weight:700;">|</span>
+          ${B.street} <span style="color:${B.accent}; font-weight:700;">|</span>
+          ${B.city} <span style="color:${B.accent}; font-weight:700;">|</span>
+          tel. <a href="tel:${B.phoneHref}" style="text-decoration:none; color:#333333;">${B.phoneText}</a>
         </div>
         <div style="margin-top: 6px;">
           <a href="${bannerLink}" target="_blank" style="text-decoration:none;">
-            <img src="${bannerUrl}" alt="Medidesk" width="565" style="display:block; width:565px; max-width:100%; height:auto; border:0; margin:0;" />
+            <img src="${bannerUrl}" alt="${B.name}" width="565" style="display:block; width:565px; max-width:100%; height:auto; border:0; margin:0;" />
           </a>
         </div>
       </div>
 
       <div style="margin-top:10px;">
-        <div style="color:#333333; font-size:12px; font-weight:500;">
-          Obserwuj nas: ${observeLinks}<a href="https://www.facebook.com/medideskpl/" style="text-decoration:none; color:#00cca3;">Facebook</a> <span style="color:#00cca3;">|</span> <a href="https://www.linkedin.com/company/18386183/" style="text-decoration:none; color:#00cca3;">Linkedin</a>
-        </div>
+        ${followLine ? `<div style="color:#333333; font-size:12px; font-weight:500;">
+          Obserwuj nas: ${followLine}
+        </div>` : ''}
         <div style="margin-top:8px; color:#8f8f8f; font-size:9px; line-height:14px; font-weight:700;">
-          Medidesk Sp. z o. o. | NIP: 701-065-95-20 | KRS: 0000659580 | REGON: 366382110
+          ${B.legal}
         </div>
         <div style="margin-top:8px; color:#8f8f8f; font-size:9px; line-height:14px; font-weight:700;">
           Treść tej wiadomości zawiera informacje poufne, przeznaczone tylko dla adresata. Udostępnianie, ujawnianie, powielanie, rozpowszechnianie bądź powoływanie się na jakikolwiek jej fragment jest zabronione.<br>
           W razie przypadkowego otrzymania tej wiadomości, prosimy o powiadomienie o tym nadawcy oraz trwałe jej usunięcie.
         </div>
         <div style="margin-top:8px; color:#8f8f8f; font-size:9px; line-height:14px; font-weight:700;">
-          Administratorem Twoich danych osobowych pozyskanych w związku z prowadzoną korespondencją jest Medidesk Sp. z o.o. z siedzibą w Warszawie 01-570, ul. Władysława Niegolewskiego 17/2. Twoje dane osobowe będą przetwarzane w zakresie niezbędnym do prowadzenia korespondencji elektronicznej oraz w celach z niej wynikających. Dodatkowe informacje o zasadach przetwarzania i ochrony Twoich danych osobowych dostępne są w naszej <a href="https://medidesk.pl/polityka-prywatnosci/" style="text-decoration:underline; color:#8f8f8f;">Polityce Prywatności</a> zamieszczonej na stronie internetowej <a href="https://medidesk.pl" style="text-decoration:underline; color:#8f8f8f;">medidesk.pl</a>.
-        </div>
-        <div style="margin-top:8px; color:#8f8f8f; font-size:9px; line-height:14px; font-weight:700;">
-          Administratorem Twoich danych osobowych w związku z Twoją aktywnością na naszym profilu firmowym Facebook jest Medidesk Sp. z o.o. W celu zapoznania się z obowiązkiem informacyjnym w zakresie przetwarzania Twoich danych osobowych przez Medidesk Sp. z o.o. i Facebook Inc. <a href="https://medidesk.pl/obowiazek-informacyjny-rodo-facebook/" style="text-decoration:underline; color:#8f8f8f;">kliknij tu</a>.
-        </div>
+          Administratorem Twoich danych osobowych pozyskanych w związku z prowadzoną korespondencją jest ${B.rodoAdmin}. Twoje dane osobowe będą przetwarzane w zakresie niezbędnym do prowadzenia korespondencji elektronicznej oraz w celach z niej wynikających. Dodatkowe informacje o zasadach przetwarzania i ochrony Twoich danych osobowych dostępne są w naszej <a href="${B.privacyUrl}" style="text-decoration:underline; color:#8f8f8f;">Polityce Prywatności</a> zamieszczonej na stronie internetowej <a href="${B.siteUrl}" style="text-decoration:underline; color:#8f8f8f;">${B.siteName}</a>.
+        </div>${rodoFacebookBasic}
       </div>
     </div>
 </body>
@@ -1386,22 +1564,22 @@
                 <table class="rbcc" width="100%">
                     <tr>
                         <td class="col-left" width="130px" align="left" style="width: 130px; display: inline-block;">
-                            <img src="${photoSrc}" alt="${fullName}" style="border: 0 !important; max-width: 100% !important; height: 109px !important; width: 109px !important; border: 1px #0074d7 solid !important; -webkit-border-radius: 50%; -moz-border-radius: 50%; border-radius: 50% !important; object-fit: cover;" />
+                            <img src="${photoSrc}" alt="${fullName}" style="border: 0 !important; max-width: 100% !important; height: 109px !important; width: 109px !important; border: 1px ${B.accent} solid !important; -webkit-border-radius: 50%; -moz-border-radius: 50%; border-radius: 50% !important; object-fit: cover;" />
             </td>
                         <td class="col-right" width="490px" align="left" style="color: #333333 !important; width: 490px; display: inline-block;">
-                            <p style="margin: 0 0 2px 0 !important; padding: 0 !important; font-family: 'EuclidCircularB', Arial, sans-serif !important; font-size: 14px !important; font-weight: 700 !important; line-height: 18px !important; color: #0074d7 !important;">${fullName}</p>
+                            <p style="margin: 0 0 2px 0 !important; padding: 0 !important; font-family: 'EuclidCircularB', Arial, sans-serif !important; font-size: 14px !important; font-weight: 700 !important; line-height: 18px !important; color: ${B.accent} !important;">${fullName}</p>
                             ${role ? `<p style="margin: 0 !important; padding: 0 !important; font-family: 'EuclidCircularB', Arial, sans-serif !important; font-size: 14px !important; font-weight: 500 !important; line-height: 18px !important; color: #333333 !important;">${role}</p>` : ''}
-                            <hr style="height: 3px !important; width: 90px !important; background: #0074d7 !important; border: 0px solid; margin: 8px 0 !important">
+                            <hr style="height: 3px !important; width: 90px !important; background: ${B.accent} !important; border: 0px solid; margin: 8px 0 !important">
                             ${phone ? `<a href="tel:${phone.replace(/\s/g, '')}" title="${phone}" style="text-decoration:none !important; color: #333333 !important; font-family: 'EuclidCircularB', Arial, sans-serif !important; font-size: 12px !important; font-weight: 500 !important; border: none; line-height: 18px !important">
-                                <img src="${PHONE_ICON_DATA}" alt="${phone}" style="border: 0 !important; max-width: 18px !important; height: auto !important; margin-right: 5px !important;">
+                                <img src="${B.icons.phone}" alt="${phone}" style="border: 0 !important; max-width: 18px !important; height: auto !important; margin-right: 5px !important;">
                                 <span style="color: #333333 !important;">${phone}</span>
                             </a><br>` : ''}
                             <a href="mailto:${email}" title="${email}" style="text-decoration:none !important; color: #333333 !important; font-family: 'EuclidCircularB', Arial, sans-serif !important; font-size: 12px !important; font-weight: 500 !important; border: none; line-height: 18px !important">
-                                <img src="${MAIL_ICON_DATA}" alt="${email}" style="border: 0 !important; max-width: 18px !important; height: auto !important; margin-right: 5px !important;">
+                                <img src="${B.icons.mail}" alt="${email}" style="border: 0 !important; max-width: 18px !important; height: auto !important; margin-right: 5px !important;">
                                 <span style="color: #333333 !important;">${email}</span>
                             </a><br>
 ${linkedin ? `<a href="${linkedin}" title="${linkedin}" style="text-decoration:none !important; color: #333333 !important; font-family: 'EuclidCircularB', Arial, sans-serif !important; font-size: 12px !important; font-weight: 500 !important; border: none; line-height: 18px !important">
-                                <img src="${LI_ICON_DATA}" alt="dodaj mnie do LinkedIn" style="border: 0 !important; max-width: 18px !important; height: auto !important; margin-right: 5px !important;">
+                                <img src="${B.icons.li}" alt="dodaj mnie do LinkedIn" style="border: 0 !important; max-width: 18px !important; height: auto !important; margin-right: 5px !important;">
                                 <span style="color: #333333 !important;">dodaj mnie na LinkedIn</span>
                             </a><br>` : ''}
             </td>
@@ -1415,16 +1593,16 @@ ${linkedin ? `<a href="${linkedin}" title="${linkedin}" style="text-decoration:n
                     <tr>
                         <td width="100%" align="left" style="color: #333333 !important">
                             <p style="margin: 0 !important; padding: 0 !important; font-family: 'EuclidCircularB', Arial, sans-serif !important; font-size: 12px !important; font-weight: 500 !important; line-height: 18px !important; color: #333333 !important">
-                                Medidesk Sp. z o.o.
-                                <span style="color: #0074d7 !important; font-weight: 700 !important;">|</span>
-                                ul. W. Niegolewskiego 17/2
-                                <span style="color: #0074d7 !important; font-weight: 700 !important;">|</span>
-                                01-570 Warszawa
-                                <span style="color: #0074d7 !important; font-weight: 700 !important;">|</span>
-                                tel. <a href="tel:+48222500850" title="22 250 08 50" style="text-decoration:none !important; color: #333333 !important; border: none">22 250 08 50</a>
-                            </p>                            
+                                ${B.company}
+                                <span style="color: ${B.accent} !important; font-weight: 700 !important;">|</span>
+                                ${B.street}
+                                <span style="color: ${B.accent} !important; font-weight: 700 !important;">|</span>
+                                ${B.city}
+                                <span style="color: ${B.accent} !important; font-weight: 700 !important;">|</span>
+                                tel. <a href="tel:${B.phoneHref}" title="${B.phoneText}" style="text-decoration:none !important; color: #333333 !important; border: none">${B.phoneText}</a>
+                            </p>
                             <a href="${bannerLink}" target="_blank">
-                                <img src="${bannerUrl}" alt="Medidesk" style="margin: 0; border: 0; max-width: 100%; width: 565px; max-height: 91px; height: auto;" />
+                                <img src="${bannerUrl}" alt="${B.name}" style="margin: 0; border: 0; max-width: 100%; width: 565px; max-height: 91px; height: auto;" />
                             </a>
                         </td>
                     </tr>
@@ -1434,26 +1612,23 @@ ${linkedin ? `<a href="${linkedin}" title="${linkedin}" style="text-decoration:n
         <tr class="rbcc">
             <td bgcolor="transparent">
                 <table class="rbcc" width="100%" style="max-width: 565px;">
-                    <tr>
+                    ${followLine ? `<tr>
                         <td width="100%" align="left" style="color: #333333 !important; font-family: 'EuclidCircularB', Arial, sans-serif !important; font-size: 12px !important; font-weight: 500 !important; line-height: 18px !important">
-                            Obserwuj nas: ${observeLinks}<a href="https://www.facebook.com/medideskpl/" title="Facebook" style="text-decoration:none !important; color: #00cca3 !important; border: none">Facebook</a> <span style="color: #00cca3 !important">|</span> <a href="https://www.linkedin.com/company/18386183/" title="Linkedin" style="text-decoration:none !important; color: #00cca3 !important; border: none">Linkedin</a>
+                            Obserwuj nas: ${followLine}
                         </td>
-                    </tr>
+                    </tr>` : ''}
                     <tr>
                         <td width="100%" align="left" style="color: #8f8f8f; font-size: 9px; line-height: 14px;">
                             <p style="margin: 8px 0 0; padding: 0; font-family: 'EuclidCircularB', Arial, sans-serif; font-size: 9px; font-weight: 700; line-height: 14px">
-                Medidesk Sp. z o. o. | NIP: 701-065-95-20 | KRS: 0000659580 | REGON: 366382110
+                ${B.legal}
                             </p>
                             <p style="margin: 8px 0 0; padding: 0; font-family: 'EuclidCircularB', Arial, sans-serif; font-size: 9px; font-weight: 700; line-height: 14px">
                                 Treść tej wiadomości zawiera informacje poufne, przeznaczone tylko dla adresata. Udostępnianie, ujawnianie, powielanie, rozpowszechnianie bądź powoływanie się na jakikolwiek jej fragment jest zabronione.<br>
                                 W razie przypadkowego otrzymania tej wiadomości, prosimy o powiadomienie o tym nadawcy oraz trwałe jej usunięcie.
                             </p>
                             <p style="margin: 8px 0 0; padding: 0; font-family: 'EuclidCircularB', Arial, sans-serif; font-size: 9px; font-weight: 700; line-height: 14px">
-                                Administratorem Twoich danych osobowych pozyskanych w związku z prowadzoną korespondencją jest Medidesk Sp. z o.o. z siedzibą w Warszawie 01-570, ul. Władysława Niegolewskiego 17/2. Twoje dane osobowe będą przetwarzane w zakresie niezbędnym do prowadzenia korespondencji elektronicznej oraz w celach z niej wynikających. Dodatkowe informacje o zasadach przetwarzania i ochrony Twoich danych osobowych dostępne są w naszej <a href="https://medidesk.pl/polityka-prywatnosci/" title="Polityce Prywatności" style="text-decoration:underline !important; color: #8f8f8f; border: none">Polityce Prywatności</a> zamieszczonej na stronie internetowej <a href="https://medidesk.pl" title="medidesk.pl" style="text-decoration:underline !important; color: #8f8f8f; border: none">medidesk.pl</a>.
-                            </p>
-                            <p style="margin: 8px 0 0; padding: 0; font-family: 'EuclidCircularB', Arial, sans-serif; font-size: 9px; font-weight: 700; line-height: 14px">
-                                Administratorem Twoich danych osobowych w związku z Twoją aktywnością na naszym profilu firmowym Facebook jest Medidesk Sp. z o.o. W celu zapoznania się z obowiązkiem informacyjnym w zakresie przetwarzania Twoich danych osobowych przez Medidesk Sp. z o.o. i Facebook Inc. <a href="https://medidesk.pl/obowiazek-informacyjny-rodo-facebook/" title="Obowiązek informacyjny RODO – Facebook" style="text-decoration:underline !important; color: #8f8f8f; border: none;">kliknij tu</a>.
-                            </p>
+                                Administratorem Twoich danych osobowych pozyskanych w związku z prowadzoną korespondencją jest ${B.rodoAdmin}. Twoje dane osobowe będą przetwarzane w zakresie niezbędnym do prowadzenia korespondencji elektronicznej oraz w celach z niej wynikających. Dodatkowe informacje o zasadach przetwarzania i ochrony Twoich danych osobowych dostępne są w naszej <a href="${B.privacyUrl}" title="Polityce Prywatności" style="text-decoration:underline !important; color: #8f8f8f; border: none">Polityce Prywatności</a> zamieszczonej na stronie internetowej <a href="${B.siteUrl}" title="${B.siteName}" style="text-decoration:underline !important; color: #8f8f8f; border: none">${B.siteName}</a>.
+                            </p>${rodoFacebookFull}
             </td>
           </tr>
       </table>
@@ -1569,9 +1744,6 @@ ${linkedin ? `<a href="${linkedin}" title="${linkedin}" style="text-decoration:n
       }
     };
 
-    form.querySelectorAll('input:not([type="file"]), select').forEach(input => {
-      input.addEventListener('input', livePreview);
-    });
     document.getElementById('bannerGallery').addEventListener('click', livePreview);
 
     // Po zmianie danych przycisk "Generuj" musi być znów aktywny.
@@ -1584,9 +1756,13 @@ ${linkedin ? `<a href="${linkedin}" title="${linkedin}" style="text-decoration:n
       submitBtn.classList.remove("secondary");
       submitBtn.classList.add("primary");
     };
-    const formInputs = form.querySelectorAll('input:not([type="file"]):not([type="hidden"]), select');
-    formInputs.forEach(input => {
-      input.addEventListener('input', resetButtons);
+    // Delegacja zamiast listenerów na konkretnych polach: karty marek i checkboxy
+    // adresów www powstają dynamicznie i są wymieniane przy zmianie marki,
+    // więc listener przypięty raz do formularza jest jedynym, który ich nie zgubi.
+    form.addEventListener('input', (e) => {
+      if (!e.target.matches('input:not([type="file"]):not([type="hidden"]), select')) return;
+      resetButtons();
+      livePreview();
     });
     // Nasłuchuj też zmian w galerii bannerów
     const bannerGalleryEl = document.getElementById('bannerGallery');
@@ -1957,7 +2133,7 @@ ${linkedin ? `<a href="${linkedin}" title="${linkedin}" style="text-decoration:n
         const blobUrl = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = blobUrl;
-        link.download = `medidesk-photo-${size}.png`;
+        link.download = `${getBrand().key}-photo-${size}.png`;
         link.click();
         URL.revokeObjectURL(blobUrl);
       }, "image/png", 1);

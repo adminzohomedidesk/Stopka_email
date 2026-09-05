@@ -232,6 +232,41 @@
     .status-msg.ok { color: #10b981; }
     .status-msg.err { color: #ef4444; }
     .status-msg.loading { color: #6366f1; }
+
+    /* Zakładki marek */
+    .brand-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .brand-tab {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border: 2px solid #e5e7eb;
+      background: #fff;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #6b7280;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .brand-tab img { width: 22px; height: 22px; object-fit: contain; }
+    .brand-tab:hover { background: #f9fafb; }
+    .brand-tab.active { color: #111827; }
+    .banner-card .missing {
+      margin: 0 0 12px;
+      padding: 8px 12px;
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      border-radius: 8px;
+      color: #92400e;
+      font-size: 0.85rem;
+    }
   </style>
 </head>
 <body>
@@ -252,81 +287,39 @@
   <h1>Zarządzanie bannerami</h1>
   <p class="subtitle">Zmiany są od razu widoczne w generatorze stopek po odświeżeniu strony.</p>
 
-  <!-- Banner akcja -->
-  <div class="banner-card">
-    <h2>Banner akcji / wydarzenia</h2>
-    <p class="desc">Plik: <code>banner_akcja_1.png</code> — kliknięcie zawsze idzie przez <code>banner_akcja.html</code>, który przekierowuje do aktualnego wydarzenia</p>
-    <div class="banner-preview-wrap">
-      <div class="current-preview">
-        <img id="previewAkcja" src="https://raw.githubusercontent.com/adminzohomedidesk/Stopka_email/main/banner_akcja_1.png" data-base="https://raw.githubusercontent.com/adminzohomedidesk/Stopka_email/main/banner_akcja_1.png" alt="Banner akcji" />
-        <div class="label">Aktualny banner</div>
-        <div class="current-link">Przekierowuje do: <span id="currentRedirectAkcja">—</span></div>
-      </div>
-      <div class="banner-form">
-        <div class="field">
-          <label>Nowy adres docelowy wydarzenia</label>
-          <input type="url" id="redirectAkcja" placeholder="https://..." />
-        </div>
-        <div class="field">
-          <label>Nowy plik graficzny (opcjonalnie)</label>
-          <div class="file-row">
-            <label class="file-label" for="fileAkcja">Wybierz plik</label>
-            <span class="file-name" id="fileNameAkcja">nie wybrano</span>
-            <input type="file" id="fileAkcja" accept="image/png,image/jpeg,image/gif" />
-          </div>
-          <div class="new-preview-wrap" id="newPreviewAkcjaWrap">
-            <img id="newPreviewAkcja" src="" alt="Nowy banner" />
-            <div class="label">Nowy banner (podgląd)</div>
-          </div>
-        </div>
-        <div class="save-row">
-          <button class="btn-save" id="saveAkcja">Zapisz zmiany</button>
-          <span class="status-msg" id="statusAkcja"></span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Banner email -->
-  <div class="banner-card">
-    <h2>Banner standardowy</h2>
-    <p class="desc">Plik: <code>banner_email_1.png</code> — drugi banner w generatorze</p>
-    <div class="banner-preview-wrap">
-      <div class="current-preview">
-        <img id="previewEmail" src="https://raw.githubusercontent.com/adminzohomedidesk/Stopka_email/main/banner_email_1.png" data-base="https://raw.githubusercontent.com/adminzohomedidesk/Stopka_email/main/banner_email_1.png" alt="Banner email" />
-        <div class="label">Aktualny banner</div>
-        <div class="current-link">Aktualny link: <span id="currentLinkEmail">—</span></div>
-      </div>
-      <div class="banner-form">
-        <div class="field">
-          <label>Nowy link po kliknięciu w banner</label>
-          <input type="url" id="linkEmail" placeholder="https://..." />
-        </div>
-        <div class="field">
-          <label>Nowy plik graficzny (opcjonalnie)</label>
-          <div class="file-row">
-            <label class="file-label" for="fileEmail">Wybierz plik</label>
-            <span class="file-name" id="fileNameEmail">nie wybrano</span>
-            <input type="file" id="fileEmail" accept="image/png,image/jpeg,image/gif" />
-          </div>
-          <div class="new-preview-wrap" id="newPreviewEmailWrap">
-            <img id="newPreviewEmail" src="" alt="Nowy banner" />
-            <div class="label">Nowy banner (podgląd)</div>
-          </div>
-        </div>
-        <div class="save-row">
-          <button class="btn-save" id="saveEmail">Zapisz zmiany</button>
-          <span class="status-msg" id="statusEmail"></span>
-        </div>
-      </div>
-    </div>
-  </div>
+  <div class="brand-tabs" id="brandTabs"></div>
+  <div id="bannerCards"></div>
 </div>
 
 <script>
   const API_URL = "https://stopka-api.onrender.com";
   const RAW_BASE = "https://raw.githubusercontent.com/adminzohomedidesk/Stopka_email/main";
   let userPin = "";  // PIN walidowany serwerowo
+
+  // === Marki i ich pliki ===
+  // Odpowiednik tabeli BRANDS w proxy i w generatorze. Dodanie marki = jeden wpis.
+  const BRANDS = {
+    medidesk: {
+      label: "Medidesk",
+      logo: `${RAW_BASE}/20251001%20MD%20fav.png`,
+      accent: "#00bfa5",
+      akcjaPng: "banner_akcja_1.png",
+      akcjaHtml: "banner_akcja.html",
+      emailPng: "banner_email_1.png",
+    },
+    vetidesk: {
+      label: "Vetidesk",
+      logo: `${RAW_BASE}/vetidesk_fav.png`,
+      accent: "#0A7DF6",
+      akcjaPng: "banner_vet_akcja_1.png",
+      akcjaHtml: "banner_vet_akcja.html",
+      emailPng: "banner_vet_email_1.png",
+    },
+  };
+
+  let activeBrand = "medidesk";
+  let config = {};             // odpowiedź /api/config
+  let brandsSupported = false; // czy serwer zna już podział na marki
 
   // PIN
   const pinInput = document.getElementById("pinInput");
@@ -342,90 +335,239 @@
     userPin = pinInput.value;
     document.getElementById("pinScreen").style.display = "none";
     document.getElementById("adminPanel").style.display = "block";
+    renderTabs();
     loadConfig();
   };
   pinBtn.addEventListener("click", checkPin);
   pinInput.addEventListener("keydown", e => { if (e.key === "Enter") checkPin(); });
 
-  // Wymusza odświeżenie obrazka — bypasses browser cache
-  const refreshImage = (imgId) => {
-    const img = document.getElementById(imgId);
-    const base = img.getAttribute("data-base") || img.src.split("?")[0];
-    img.src = "";  // unload
-    setTimeout(() => { img.src = `${base}?t=${Date.now()}`; }, 50);
+  // === Zakładki marek ===
+  const renderTabs = () => {
+    const tabs = document.getElementById("brandTabs");
+    tabs.innerHTML = "";
+    Object.entries(BRANDS).forEach(([key, b]) => {
+      const btn = document.createElement("button");
+      btn.className = "brand-tab" + (key === activeBrand ? " active" : "");
+      btn.style.borderColor = key === activeBrand ? b.accent : "#e5e7eb";
+      btn.innerHTML = `<img src="${b.logo}" alt="${b.label}"><span>${b.label}</span>`;
+      btn.addEventListener("click", () => {
+        activeBrand = key;
+        renderTabs();
+        renderCards();
+      });
+      tabs.appendChild(btn);
+    });
+  };
+
+  // === Karty bannerów dla aktywnej marki ===
+  // Oba sloty ("akcja" i "email") mają ten sam układ, różnią się etykietami
+  // i tym, co zapisują — więc budujemy je z jednego szablonu.
+  const SLOTS = [
+    {
+      id: "akcja",
+      title: "Banner akcji / wydarzenia",
+      linkLabel: "Nowy adres docelowy wydarzenia",
+      currentLabel: "Przekierowuje do:",
+      endpoint: "/api/admin/banner-akcja",
+      payloadKey: "redirect_url",
+      emptyMsg: "Podaj adres docelowy wydarzenia.",
+      file: (b) => b.akcjaPng,
+      desc: (b) => `Plik: <code>${b.akcjaPng}</code> — kliknięcie zawsze idzie przez <code>${b.akcjaHtml}</code>, który przekierowuje do aktualnego wydarzenia`,
+      value: (cfg) => cfg.redirect_akcja || "",
+    },
+    {
+      id: "email",
+      title: "Banner standardowy",
+      linkLabel: "Nowy link po kliknięciu w banner",
+      currentLabel: "Aktualny link:",
+      endpoint: "/api/admin/banner-email",
+      payloadKey: "link",
+      emptyMsg: "Podaj link dla bannera.",
+      file: (b) => b.emailPng,
+      desc: (b) => `Plik: <code>${b.emailPng}</code> — drugi banner w generatorze`,
+      value: (cfg) => cfg.link_email || "",
+    },
+  ];
+
+  const renderCards = () => {
+    const brand = BRANDS[activeBrand];
+    const brandCfg = (config.brands && config.brands[activeBrand]) || {};
+    const wrap = document.getElementById("bannerCards");
+    wrap.innerHTML = "";
+
+    SLOTS.forEach((slot) => {
+      const fileName = slot.file(brand);
+      const imgUrl = `${RAW_BASE}/${fileName}`;
+      const currentValue = slot.value(brandCfg);
+
+      const card = document.createElement("div");
+      card.className = "banner-card";
+      card.innerHTML = `
+        <h2>${slot.title}</h2>
+        <p class="desc">${slot.desc(brand)}</p>
+        <div class="missing" data-role="missing" style="display:none;">
+          Tego bannera nie ma jeszcze w repozytorium — dopóki nie wgrasz pliku, nie pojawi się w generatorze.
+        </div>
+        <div class="banner-preview-wrap">
+          <div class="current-preview">
+            <img data-role="preview" src="${imgUrl}?t=${Date.now()}" data-base="${imgUrl}" alt="${slot.title}" />
+            <div class="label">Aktualny banner</div>
+            <div class="current-link">${slot.currentLabel} <span data-role="current">${currentValue || "—"}</span></div>
+          </div>
+          <div class="banner-form">
+            <div class="field">
+              <label>${slot.linkLabel}</label>
+              <input type="url" data-role="link" placeholder="https://..." value="${currentValue.replace(/"/g, "&quot;")}" />
+            </div>
+            <div class="field">
+              <label>Nowy plik graficzny (opcjonalnie)</label>
+              <div class="file-row">
+                <label class="file-label" for="file_${activeBrand}_${slot.id}">Wybierz plik</label>
+                <span class="file-name" data-role="fileName">nie wybrano</span>
+                <input type="file" id="file_${activeBrand}_${slot.id}" data-role="file" accept="image/png,image/jpeg,image/gif" />
+              </div>
+              <div class="new-preview-wrap" data-role="newPreviewWrap">
+                <img data-role="newPreview" src="" alt="Nowy banner" />
+                <div class="label">Nowy banner (podgląd)</div>
+              </div>
+            </div>
+            <div class="save-row">
+              <button class="btn-save" data-role="save">Zapisz zmiany</button>
+              <span class="status-msg" data-role="status"></span>
+            </div>
+          </div>
+        </div>`;
+
+      wrap.appendChild(card);
+      wireCard(card, slot, currentValue);
+
+      // Zabezpieczenie na czas, gdy front jest już nowy, a serwer jeszcze stary.
+      if (activeBrand !== "medidesk" && !brandsSupported) {
+        const saveBtn = card.querySelector('[data-role="save"]');
+        const statusEl = card.querySelector('[data-role="status"]');
+        saveBtn.disabled = true;
+        statusEl.className = "status-msg err";
+        statusEl.textContent = "Serwer nie obsługuje jeszcze marki Vetidesk — zapis zablokowany.";
+      }
+    });
+  };
+
+  const wireCard = (card, slot, savedValue) => {
+    const q = (role) => card.querySelector(`[data-role="${role}"]`);
+    const previewImg = q("preview");
+    const linkInput = q("link");
+    const fileInput = q("file");
+    const saveBtn = q("save");
+    const statusEl = q("status");
+    let saved = savedValue;
+
+    // Brakujący plik (np. akcja Vetidesku, której jeszcze nie ma) — pokaż komunikat
+    previewImg.addEventListener("error", () => {
+      previewImg.style.display = "none";
+      q("missing").style.display = "block";
+    });
+
+    const markDirty = () => {
+      saveBtn.classList.add("dirty");
+      if (!card.querySelector(".dirty-hint")) {
+        const hint = document.createElement("span");
+        hint.className = "dirty-hint";
+        hint.textContent = "← niezapisane zmiany";
+        saveBtn.parentElement.appendChild(hint);
+      }
+    };
+    const clearDirty = () => {
+      saveBtn.classList.remove("dirty");
+      const hint = card.querySelector(".dirty-hint");
+      if (hint) hint.remove();
+    };
+
+    linkInput.addEventListener("input", () => {
+      if (linkInput.value !== saved) markDirty(); else clearDirty();
+    });
+
+    fileInput.addEventListener("change", function () {
+      const file = this.files[0];
+      if (!file) return;
+      q("fileName").textContent = file.name;
+      const reader = new FileReader();
+      reader.onload = e => {
+        q("newPreview").src = e.target.result;
+        q("newPreviewWrap").style.display = "block";
+      };
+      reader.readAsDataURL(file);
+      markDirty();
+    });
+
+    saveBtn.addEventListener("click", async () => {
+      const value = linkInput.value.trim();
+      if (!value) {
+        statusEl.className = "status-msg err";
+        statusEl.textContent = slot.emptyMsg;
+        return;
+      }
+
+      statusEl.className = "status-msg loading";
+      statusEl.textContent = "Zapisuję... (jeśli serwer spał, może potrwać ~30s)";
+      saveBtn.disabled = true;
+
+      try {
+        const payload = { pin: userPin, brand: activeBrand };
+        payload[slot.payloadKey] = value;
+        if (fileInput.files[0]) payload.image_base64 = await fileToBase64(fileInput.files[0]);
+
+        const r = await fetch(`${API_URL}${slot.endpoint}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (r.status === 401) throw new Error("Nieprawidłowy PIN — odśwież stronę i wpisz poprawny.");
+        if (!r.ok) throw new Error("Błąd serwera (" + r.status + ")");
+
+        q("current").textContent = value;
+        if (fileInput.files[0]) {
+          // Pokaż natychmiast uploadowany plik (z pamięci przeglądarki) — bez czekania na CDN
+          previewImg.src = await fileToDataUrl(fileInput.files[0]);
+          previewImg.style.display = "";
+          q("missing").style.display = "none";
+          fileInput.value = "";
+          q("fileName").textContent = "nie wybrano";
+          q("newPreviewWrap").style.display = "none";
+        }
+
+        saved = value;
+        clearDirty();
+        statusEl.className = "status-msg ok";
+        statusEl.textContent = "✓ Zapisano! Podgląd zaktualizuje się za chwilę.";
+      } catch (err) {
+        statusEl.className = "status-msg err";
+        statusEl.textContent = "Błąd: " + err.message;
+      } finally {
+        saveBtn.disabled = false;
+      }
+    });
   };
 
   const loadConfig = async () => {
     try {
-      // Świeże podglądy bannerów (omija cache przeglądarki)
-      refreshImage("previewAkcja");
-      refreshImage("previewEmail");
-
       const r = await fetch(`${API_URL}/api/config?t=${Date.now()}`);
       if (!r.ok) throw new Error("Serwer nie odpowiada");
-      const cfg = await r.json();
-
-      const redirectUrl = cfg.redirect_akcja || "";
-      document.getElementById("redirectAkcja").value = redirectUrl;
-      document.getElementById("currentRedirectAkcja").textContent = redirectUrl || "—";
-      initialValues.redirectAkcja = redirectUrl;
-
-      const linkEmail = cfg.link_email || "";
-      document.getElementById("linkEmail").value = linkEmail;
-      document.getElementById("currentLinkEmail").textContent = linkEmail || "—";
-      initialValues.linkEmail = linkEmail;
+      config = await r.json();
+      // Starsze proxy nie zna marek. Ignoruje wtedy pole "brand" i zapisałoby
+      // banner Vetidesku POD PLIKAMI MEDIDESKU — dlatego przy takim proxy
+      // blokujemy zapis dla marek innych niż Medidesk (patrz renderCards).
+      brandsSupported = !!config.brands;
+      if (!config.brands) {
+        config.brands = { medidesk: { redirect_akcja: config.redirect_akcja, link_email: config.link_email } };
+      }
     } catch (e) {
       console.warn("Nie udało się wczytać konfiguracji", e);
+      config = { brands: {} };
+      brandsSupported = false;
     }
+    renderCards();
   };
-
-  // Podgląd nowego pliku
-  const setupFilePreview = (inputId, previewImgId, previewWrapId, fileNameId) => {
-    document.getElementById(inputId).addEventListener("change", function () {
-      const file = this.files[0];
-      if (!file) return;
-      document.getElementById(fileNameId).textContent = file.name;
-      const reader = new FileReader();
-      reader.onload = e => {
-        document.getElementById(previewImgId).src = e.target.result;
-        document.getElementById(previewWrapId).style.display = "block";
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-  setupFilePreview("fileAkcja", "newPreviewAkcja", "newPreviewAkcjaWrap", "fileNameAkcja");
-  setupFilePreview("fileEmail", "newPreviewEmail", "newPreviewEmailWrap", "fileNameEmail");
-
-  // Dirty state — podświetla przycisk Zapisz gdy jest niezapisana zmiana
-  const initialValues = { redirectAkcja: "", linkEmail: "" };
-  const markDirty = (saveBtnId) => {
-    const btn = document.getElementById(saveBtnId);
-    btn.classList.add("dirty");
-    if (!btn.querySelector(".dirty-hint")) {
-      const hint = document.createElement("span");
-      hint.className = "dirty-hint";
-      hint.textContent = "← niezapisane zmiany";
-      btn.parentElement.appendChild(hint);
-    }
-  };
-  const clearDirty = (saveBtnId) => {
-    const btn = document.getElementById(saveBtnId);
-    btn.classList.remove("dirty");
-    const hint = btn.parentElement.querySelector(".dirty-hint");
-    if (hint) hint.remove();
-  };
-
-  document.getElementById("redirectAkcja").addEventListener("input", function () {
-    if (this.value !== initialValues.redirectAkcja) markDirty("saveAkcja");
-    else clearDirty("saveAkcja");
-  });
-  document.getElementById("fileAkcja").addEventListener("change", () => markDirty("saveAkcja"));
-
-  document.getElementById("linkEmail").addEventListener("input", function () {
-    if (this.value !== initialValues.linkEmail) markDirty("saveEmail");
-    else clearDirty("saveEmail");
-  });
-  document.getElementById("fileEmail").addEventListener("change", () => markDirty("saveEmail"));
 
   const fileToBase64 = (file) => new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -440,109 +582,6 @@
     reader.onload = e => resolve(e.target.result);
     reader.onerror = reject;
     reader.readAsDataURL(file);
-  });
-
-  // Banner akcji
-  document.getElementById("saveAkcja").addEventListener("click", async () => {
-    const statusEl = document.getElementById("statusAkcja");
-    const saveBtn = document.getElementById("saveAkcja");
-    const redirectUrl = document.getElementById("redirectAkcja").value.trim();
-    const fileEl = document.getElementById("fileAkcja");
-
-    if (!redirectUrl) {
-      statusEl.className = "status-msg err";
-      statusEl.textContent = "Podaj adres docelowy wydarzenia.";
-      return;
-    }
-
-    statusEl.className = "status-msg loading";
-    statusEl.textContent = "Zapisuję... (jeśli serwer spał, może potrwać ~30s)";
-    saveBtn.disabled = true;
-
-    try {
-      const payload = { pin: userPin, redirect_url: redirectUrl };
-      if (fileEl.files[0]) payload.image_base64 = await fileToBase64(fileEl.files[0]);
-
-      const r = await fetch(`${API_URL}/api/admin/banner-akcja`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      if (r.status === 401) throw new Error("Nieprawidłowy PIN — odśwież stronę i wpisz poprawny.");
-      if (!r.ok) throw new Error("Błąd serwera (" + r.status + ")");
-
-      document.getElementById("currentRedirectAkcja").textContent = redirectUrl;
-      if (fileEl.files[0]) {
-        // Pokaż natychmiast uploadowany plik (z pamięci przeglądarki) — bez czekania na CDN
-        const newImgData = await fileToDataUrl(fileEl.files[0]);
-        document.getElementById("previewAkcja").src = newImgData;
-        fileEl.value = "";
-        document.getElementById("fileNameAkcja").textContent = "nie wybrano";
-        document.getElementById("newPreviewAkcjaWrap").style.display = "none";
-      }
-
-      initialValues.redirectAkcja = redirectUrl;
-      clearDirty("saveAkcja");
-      statusEl.className = "status-msg ok";
-      statusEl.textContent = "✓ Zapisano! Podgląd zaktualizuje się za chwilę.";
-    } catch (err) {
-      statusEl.className = "status-msg err";
-      statusEl.textContent = "Błąd: " + err.message;
-    } finally {
-      saveBtn.disabled = false;
-    }
-  });
-
-  // Banner standardowy
-  document.getElementById("saveEmail").addEventListener("click", async () => {
-    const statusEl = document.getElementById("statusEmail");
-    const saveBtn = document.getElementById("saveEmail");
-    const linkVal = document.getElementById("linkEmail").value.trim();
-    const fileEl = document.getElementById("fileEmail");
-
-    if (!linkVal) {
-      statusEl.className = "status-msg err";
-      statusEl.textContent = "Podaj link dla bannera.";
-      return;
-    }
-
-    statusEl.className = "status-msg loading";
-    statusEl.textContent = "Zapisuję... (jeśli serwer spał, może potrwać ~30s)";
-    saveBtn.disabled = true;
-
-    try {
-      const payload = { pin: userPin, link: linkVal };
-      if (fileEl.files[0]) payload.image_base64 = await fileToBase64(fileEl.files[0]);
-
-      const r = await fetch(`${API_URL}/api/admin/banner-email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      if (r.status === 401) throw new Error("Nieprawidłowy PIN — odśwież stronę i wpisz poprawny.");
-      if (!r.ok) throw new Error("Błąd serwera (" + r.status + ")");
-
-      document.getElementById("currentLinkEmail").textContent = linkVal;
-      if (fileEl.files[0]) {
-        const newImgData = await fileToDataUrl(fileEl.files[0]);
-        document.getElementById("previewEmail").src = newImgData;
-        fileEl.value = "";
-        document.getElementById("fileNameEmail").textContent = "nie wybrano";
-        document.getElementById("newPreviewEmailWrap").style.display = "none";
-      }
-
-      initialValues.linkEmail = linkVal;
-      clearDirty("saveEmail");
-      statusEl.className = "status-msg ok";
-      statusEl.textContent = "✓ Zapisano! Podgląd zaktualizuje się za chwilę.";
-    } catch (err) {
-      statusEl.className = "status-msg err";
-      statusEl.textContent = "Błąd: " + err.message;
-    } finally {
-      saveBtn.disabled = false;
-    }
   });
 </script>
 </body>
