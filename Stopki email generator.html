@@ -743,7 +743,7 @@
           </label>
           <label>
             E-mail <span style="color: #d32f2f;">*</span>
-            <input id="email" required />
+            <input id="email" value="@medidesk.com" required />
           </label>
           <label>
             LinkedIn (opcjonalnie)
@@ -951,6 +951,7 @@
         icons: { phone: `${RAW}/phone_mini.png`, mail: `${RAW}/mail_mini.png`, li: `${RAW}/li_mini.png` },
         banners: { akcja: "banner_akcja_1.png", email: "banner_email_1.png" },
         defaultBannerLink: "https://medidesk.pl",
+        emailDomain: "@medidesk.com",
         siteName: "medidesk.pl",
         siteUrl: "https://medidesk.pl",
         privacyUrl: "https://medidesk.pl/polityka-prywatnosci/",
@@ -981,6 +982,7 @@
         icons: { phone: `${RAW}/phone_mini_vet.png`, mail: `${RAW}/mail_mini_vet.png`, li: `${RAW}/li_mini_vet.png` },
         banners: { akcja: "banner_vet_akcja_1.png", email: "banner_vet_email_1.png" },
         defaultBannerLink: "https://vetidesk.com",
+        emailDomain: "@vetidesk.com",
         siteName: "vetidesk.com",
         siteUrl: "https://vetidesk.com",
         privacyUrl: "https://vetidesk.com/privacy-policy",
@@ -1068,13 +1070,30 @@
 
     // Zmiana marki przestawia nagłówek, linki, podpowiedź e-maila i galerię bannerów.
     // Wybrany wcześniej banner należy do poprzedniej marki, więc go czyścimy.
+    // Pole e-mail jest wstępnie wypełnione samą domeną — pracownik dopisuje
+    // przed nią swoje imię, a jeśli mu przeszkadza, po prostu ją kasuje.
+    // Przy zmianie marki podmieniamy końcówkę, ale tylko wtedy, gdy to wciąż
+    // domena poprzedniej marki; własnego adresu nikomu nie ruszamy.
+    const swapEmailDomain = (fromBrand, toBrand) => {
+      const emailInput = document.getElementById("email");
+      if (!emailInput || !fromBrand || fromBrand.key === toBrand.key) return;
+      const value = emailInput.value.trim();
+      if (!value) {
+        emailInput.value = toBrand.emailDomain;
+      } else if (value.toLowerCase().endsWith(fromBrand.emailDomain.toLowerCase())) {
+        emailInput.value = value.slice(0, -fromBrand.emailDomain.length) + toBrand.emailDomain;
+      }
+    };
+
     const selectBrand = (key) => {
       if (!BRANDS[key]) return;
+      const previousBrand = getBrand();
       currentBrandKey = key;
       const b = getBrand();
 
       paintBrandCards();
       renderSiteLinks();
+      swapEmailDomain(previousBrand, b);
 
       if (headerLogo) { headerLogo.src = b.logo; headerLogo.alt = b.name; }
       if (headerTitle) headerTitle.textContent = `Generator stopki ${b.name}`;
@@ -1085,7 +1104,22 @@
       loadBanners();
       setCopyButtonsEnabled(false);
     };
-    
+
+    // Gdy w polu stoi sama domena, kursor ma trafić przed nią — inaczej
+    // kliknięcie ustawia go na końcu i imię ląduje po „.com".
+    const emailField = document.getElementById("email");
+    if (emailField) {
+      emailField.addEventListener("focus", () => {
+        // setTimeout, nie requestAnimationFrame: rAF nie odpala się w karcie
+        // w tle, a przeglądarka i tak ustawia kursor po obsłudze focusa
+        if (emailField.value === getBrand().emailDomain) {
+          setTimeout(() => {
+            if (emailField.value === getBrand().emailDomain) emailField.setSelectionRange(0, 0);
+          }, 0);
+        }
+      });
+    }
+
     // --- Zmienne canvasa (deklarowane wcześnie dla dostępu z funkcji) ---
     const photoInput = document.getElementById("photoInput");
     const triggerFileInput = document.getElementById("triggerFileInput");
