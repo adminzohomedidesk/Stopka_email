@@ -292,22 +292,86 @@
       height: 100%;
       cursor: move;
     }
-    .zoom-controls {
+    /* Suwaki kadrowania: powiększenie i obrót */
+    .crop-controls {
       display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 1rem;
+      flex-direction: column;
+      gap: 0.6rem;
       margin: 1rem 0;
     }
-    .zoom-controls button {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      font-size: 1.5rem;
+    .crop-row {
       display: flex;
       align-items: center;
-      justify-content: center;
+      gap: 0.75rem;
     }
+    .crop-row > .crop-label {
+      flex: 0 0 5.5rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--primary-dark);
+    }
+    .crop-row > .crop-value {
+      flex: 0 0 3.2rem;
+      text-align: right;
+      font-size: 0.8rem;
+      color: var(--gray);
+      font-variant-numeric: tabular-nums;
+    }
+    .crop-slider {
+      flex: 1;
+      width: auto;
+      padding: 0;
+      border: none;
+      background: transparent !important;
+      appearance: none;
+      -webkit-appearance: none;
+      height: 22px;
+      cursor: pointer;
+    }
+    .crop-slider:disabled { cursor: not-allowed; opacity: 0.45; }
+    .crop-slider:focus { outline: none; }
+    .crop-slider::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 3px;
+      background: #e2e8f0;
+    }
+    .crop-slider::-moz-range-track {
+      height: 6px;
+      border-radius: 3px;
+      background: #e2e8f0;
+    }
+    .crop-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      margin-top: -6px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: 2px solid #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+    .crop-slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: 2px solid #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+    .crop-btn {
+      flex: 0 0 auto;
+      padding: 0.3rem 0.55rem;
+      font-size: 0.8rem;
+      line-height: 1.1;
+      border-radius: 6px;
+      border: 1.5px solid var(--border-color);
+      background: #fff;
+      color: var(--primary-dark);
+      font-weight: 600;
+    }
+    .crop-btn:hover:not(:disabled) { background: #f0fdfb; border-color: var(--primary); }
+    .crop-btn:disabled { opacity: 0.45; cursor: not-allowed; }
     .image-actions {
       display: flex;
       gap: 1rem;
@@ -530,10 +594,24 @@
           <div class="canvas-wrapper">
             <canvas id="photoCanvas"></canvas>
           </div>
-          <div class="zoom-controls">
-            <button type="button" id="zoomOut" title="Pomniejsz">−</button>
-            <span>ZOOM</span>
-            <button type="button" id="zoomIn" title="Powiększ">+</button>
+          <div class="crop-controls">
+            <div class="crop-row">
+              <label class="crop-label" for="zoomSlider">Powiększenie</label>
+              <input type="range" class="crop-slider" id="zoomSlider" min="1" max="4" step="0.01" value="1" disabled
+                     aria-label="Powiększenie zdjęcia" />
+              <span class="crop-value" id="zoomValue">100%</span>
+            </div>
+            <div class="crop-row">
+              <label class="crop-label" for="rotateSlider">Obrót</label>
+              <input type="range" class="crop-slider" id="rotateSlider" min="-180" max="180" step="1" value="0" disabled
+                     aria-label="Obrót zdjęcia w stopniach" />
+              <span class="crop-value" id="rotateValue">0°</span>
+            </div>
+            <div class="crop-row" style="justify-content: flex-end;">
+              <button type="button" class="crop-btn" id="rotateLeft" title="Obróć w lewo o 90°" disabled>↺ 90°</button>
+              <button type="button" class="crop-btn" id="rotateRight" title="Obróć w prawo o 90°" disabled>↻ 90°</button>
+              <button type="button" class="crop-btn" id="cropReset" title="Wyśrodkuj i wyzeruj obrót" disabled>Wyśrodkuj</button>
+            </div>
           </div>
           <div class="image-actions">
             <label class="photo-size">
@@ -991,18 +1069,99 @@
     const downloadPhotoBtn = document.getElementById("downloadPhoto");
     const resetPhotoBtn = document.getElementById("resetPhoto");
     const photoSizeSelect = document.getElementById("photoSize");
-    const zoomInBtn = document.getElementById("zoomIn");
-    const zoomOutBtn = document.getElementById("zoomOut");
+    const zoomSlider = document.getElementById("zoomSlider");
+    const zoomValueEl = document.getElementById("zoomValue");
+    const rotateSlider = document.getElementById("rotateSlider");
+    const rotateValueEl = document.getElementById("rotateValue");
+    const rotateLeftBtn = document.getElementById("rotateLeft");
+    const rotateRightBtn = document.getElementById("rotateRight");
+    const cropResetBtn = document.getElementById("cropReset");
     const confirmPhotoCropBtn = document.getElementById("confirmPhotoCrop");
     const photoCropStatusEl = document.getElementById("photoCropStatus");
     const uploadPhotoConsentEl = document.getElementById("uploadPhotoConsent");
+
+    // === Stan kadru ===
+    // Pozycję trzymamy jako środek zdjęcia w układzie canvasa (centerX/centerY),
+    // a nie lewy górny róg — dzięki temu obrót i przybliżanie dzieją się wokół
+    // środka kółka kadru, czyli tam, gdzie użytkownik patrzy.
     let img = null;
-    let scale = 1;
-    let offsetX = 0;
-    let offsetY = 0;
+    let baseScale = 1;   // powiększenie, przy którym zdjęcie wypełnia kółko
+    let scale = 1;       // faktyczne powiększenie = baseScale * suwak
+    let rotation = 0;    // w radianach
+    let centerX = 0;
+    let centerY = 0;
     let isDragging = false;
     let dragStartX = 0;
     let dragStartY = 0;
+
+    // Jedno miejsce, które wie, jak narysować kadr. Podgląd na ekranie, plik do
+    // pobrania i plik wysyłany na serwer muszą wyglądać tak samo, więc wszystkie
+    // trzy korzystają z tej samej funkcji zamiast z własnych kopii kodu.
+    const paintPhoto = (targetCtx, targetSize) => {
+      if (!img) return;
+      const f = targetSize / canvas.width;  // przelicznik podglądu na rozmiar docelowy
+      targetCtx.save();
+      targetCtx.translate(centerX * f, centerY * f);
+      targetCtx.rotate(rotation);
+      targetCtx.scale(scale * f, scale * f);
+      targetCtx.drawImage(img, -img.width / 2, -img.height / 2);
+      targetCtx.restore();
+    };
+
+    const clipToCircle = (targetCtx, targetSize) => {
+      targetCtx.globalCompositeOperation = 'destination-in';
+      targetCtx.beginPath();
+      targetCtx.arc(targetSize / 2, targetSize / 2, targetSize / 2, 0, Math.PI * 2);
+      targetCtx.fill();
+      targetCtx.globalCompositeOperation = 'source-over';
+    };
+
+    // Gotowe, okrągłe zdjęcie o zadanym boku — do pobrania, wysyłki i podglądu.
+    const renderPhotoCircle = (size) => {
+      const exportCanvas = document.createElement("canvas");
+      exportCanvas.width = exportCanvas.height = size;
+      const exportCtx = exportCanvas.getContext("2d");
+      paintPhoto(exportCtx, size);
+      clipToCircle(exportCtx, size);
+      return exportCanvas;
+    };
+
+    // Obrót i przybliżenie działają wokół środka kółka: punkt, który użytkownik
+    // widzi na środku kadru, zostaje na miejscu.
+    const pivotAroundCenter = (fn) => {
+      const c = canvas.width / 2;
+      const dx = centerX - c;
+      const dy = centerY - c;
+      const [ndx, ndy] = fn(dx, dy);
+      centerX = c + ndx;
+      centerY = c + ndy;
+    };
+
+    const applyZoom = (multiplier) => {
+      const newScale = baseScale * multiplier;
+      const k = newScale / scale;
+      pivotAroundCenter((dx, dy) => [dx * k, dy * k]);
+      scale = newScale;
+    };
+
+    const applyRotation = (degrees) => {
+      const target = degrees * Math.PI / 180;
+      const delta = target - rotation;
+      const cos = Math.cos(delta);
+      const sin = Math.sin(delta);
+      pivotAroundCenter((dx, dy) => [dx * cos - dy * sin, dx * sin + dy * cos]);
+      rotation = target;
+    };
+
+    const setCropControlsEnabled = (enabled) => {
+      [zoomSlider, rotateSlider, rotateLeftBtn, rotateRightBtn, cropResetBtn]
+        .forEach((el) => { if (el) el.disabled = !enabled; });
+    };
+
+    const syncCropLabels = () => {
+      if (zoomValueEl) zoomValueEl.textContent = `${Math.round(parseFloat(zoomSlider.value) * 100)}%`;
+      if (rotateValueEl) rotateValueEl.textContent = `${Math.round(parseFloat(rotateSlider.value))}°`;
+    };
 
     // Modal niskiej rozdzielczości (zwraca Promise<boolean>)
     const showLowResModal = (width, height) => {
@@ -1058,22 +1217,7 @@
       if (!img) return null;
 
       const size = parseInt(photoSizeSelect.value, 10) || 218;
-      const exportCanvas = document.createElement("canvas");
-      exportCanvas.width = exportCanvas.height = size;
-      const exportCtx = exportCanvas.getContext("2d");
-
-      const scaleFactor = size / canvas.width;
-      exportCtx.save();
-      exportCtx.translate(offsetX * scaleFactor, offsetY * scaleFactor);
-      exportCtx.drawImage(img, 0, 0, img.width * scale * scaleFactor, img.height * scale * scaleFactor);
-      exportCtx.restore();
-
-      exportCtx.globalCompositeOperation = 'destination-in';
-      exportCtx.beginPath();
-      exportCtx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
-      exportCtx.fill();
-
-      const base64data = exportCanvas.toDataURL("image/png").split(",")[1];
+      const base64data = renderPhotoCircle(size).toDataURL("image/png").split(",")[1];
 
       try {
         console.log("%c📤 STOPKA: Wysyłam zdjęcie...", "color: #00bfa5; font-weight: bold;");
@@ -1859,25 +2003,7 @@ ${linkedin ? `<a href="${linkedin}" title="${linkedin}" style="text-decoration:n
       if (!img) return null;
       
       const size = parseInt(photoSizeSelect.value, 10) || 218;
-      const exportCanvas = document.createElement("canvas");
-      exportCanvas.width = exportCanvas.height = size;
-      const exportCtx = exportCanvas.getContext("2d");
-      
-      const scaleFactor = size / canvas.width;
-      exportCtx.save();
-      exportCtx.translate(offsetX * scaleFactor, offsetY * scaleFactor);
-      const scaledWidth = img.width * scale * scaleFactor;
-      const scaledHeight = img.height * scale * scaleFactor;
-      exportCtx.drawImage(img, 0, 0, scaledWidth, scaledHeight);
-      exportCtx.restore();
-      
-      // Maska kołowa
-      exportCtx.globalCompositeOperation = 'destination-in';
-      exportCtx.beginPath();
-      exportCtx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
-      exportCtx.fill();
-      
-      return exportCanvas.toDataURL("image/png");
+      return renderPhotoCircle(size).toDataURL("image/png");
     };
 
     const setCropStatus = (text, color) => {
@@ -2052,25 +2178,11 @@ ${linkedin ? `<a href="${linkedin}" title="${linkedin}" style="text-decoration:n
     const drawCircleMask = () => {
       const size = canvas.width;
       ctx.clearRect(0, 0, size, size);
-      
-      // Draw image
-      if (img) {
-        ctx.save();
-        ctx.translate(offsetX, offsetY);
-        const scaledWidth = img.width * scale;
-        const scaledHeight = img.height * scale;
-        ctx.drawImage(img, 0, 0, scaledWidth, scaledHeight);
-        ctx.restore();
-      }
 
-      // Apply circular mask
-      ctx.globalCompositeOperation = 'destination-in';
-      ctx.beginPath();
-      ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
-      ctx.fill();
-      
+      paintPhoto(ctx, size);
+      clipToCircle(ctx, size);
+
       // Draw circle guide
-      ctx.globalCompositeOperation = 'source-over';
       ctx.strokeStyle = 'white';
       ctx.lineWidth = 3;
       ctx.setLineDash([10, 5]);
@@ -2082,9 +2194,15 @@ ${linkedin ? `<a href="${linkedin}" title="${linkedin}" style="text-decoration:n
 
     const resetPhoto = () => {
       img = null;
+      baseScale = 1;
       scale = 1;
-      offsetX = 0;
-      offsetY = 0;
+      rotation = 0;
+      centerX = 0;
+      centerY = 0;
+      zoomSlider.value = 1;
+      rotateSlider.value = 0;
+      syncCropLabels();
+      setCropControlsEnabled(false);
       photoInput.value = "";
       uploadedPhotoUrl = ""; // Reset URL zdjęcia
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -2103,27 +2221,7 @@ ${linkedin ? `<a href="${linkedin}" title="${linkedin}" style="text-decoration:n
         return;
       }
       const size = parseInt(photoSizeSelect.value, 10) || 109;
-      
-      // Create export canvas
-      const exportCanvas = document.createElement("canvas");
-      exportCanvas.width = exportCanvas.height = size;
-      const exportCtx = exportCanvas.getContext("2d");
-      
-      // Scale factors
-      const scaleFactor = size / canvas.width;
-      
-      exportCtx.save();
-      exportCtx.translate(offsetX * scaleFactor, offsetY * scaleFactor);
-      const scaledWidth = img.width * scale * scaleFactor;
-      const scaledHeight = img.height * scale * scaleFactor;
-      exportCtx.drawImage(img, 0, 0, scaledWidth, scaledHeight);
-      exportCtx.restore();
-
-      // Apply circular mask
-      exportCtx.globalCompositeOperation = 'destination-in';
-      exportCtx.beginPath();
-      exportCtx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
-      exportCtx.fill();
+      const exportCanvas = renderPhotoCircle(size);
 
       exportCanvas.toBlob((blob) => {
         if (!blob) {
@@ -2182,11 +2280,17 @@ ${linkedin ? `<a href="${linkedin}" title="${linkedin}" style="text-decoration:n
           const size = Math.min(wrapperWidth, 500);
           canvas.width = canvas.height = size || 300;
           
-          // Center image
-          scale = Math.max(size / img.width, size / img.height);
-          offsetX = (size - img.width * scale) / 2;
-          offsetY = (size - img.height * scale) / 2;
-          
+          // Wyśrodkuj: zdjęcie wypełnia kółko, obrót wyzerowany
+          baseScale = Math.max(size / img.width, size / img.height);
+          scale = baseScale;
+          rotation = 0;
+          centerX = size / 2;
+          centerY = size / 2;
+          zoomSlider.value = 1;
+          rotateSlider.value = 0;
+          syncCropLabels();
+          setCropControlsEnabled(true);
+
           drawCircleMask();
           downloadPhotoBtn.disabled = false;
           resetPhotoBtn.disabled = false;
@@ -2201,15 +2305,15 @@ ${linkedin ? `<a href="${linkedin}" title="${linkedin}" style="text-decoration:n
       if (!img) return;
       isDragging = true;
       const rect = canvas.getBoundingClientRect();
-      dragStartX = e.clientX - rect.left - offsetX;
-      dragStartY = e.clientY - rect.top - offsetY;
+      dragStartX = e.clientX - rect.left - centerX;
+      dragStartY = e.clientY - rect.top - centerY;
     });
 
     canvas.addEventListener("mousemove", (e) => {
       if (!isDragging || !img) return;
       const rect = canvas.getBoundingClientRect();
-      offsetX = e.clientX - rect.left - dragStartX;
-      offsetY = e.clientY - rect.top - dragStartY;
+      centerX = e.clientX - rect.left - dragStartX;
+      centerY = e.clientY - rect.top - dragStartY;
       if (isPhotoCropConfirmed) setCropUnconfirmed("zmieniono kadr");
       drawCircleMask();
     });
@@ -2222,19 +2326,61 @@ ${linkedin ? `<a href="${linkedin}" title="${linkedin}" style="text-decoration:n
       isDragging = false;
     });
 
-    zoomInBtn.addEventListener("click", () => {
-      if (!img) return;
-      scale *= 1.1;
+    // Każda zmiana kadru unieważnia wcześniejsze zatwierdzenie
+    const afterCropChange = () => {
       if (isPhotoCropConfirmed) setCropUnconfirmed("zmieniono kadr");
+      syncCropLabels();
       drawCircleMask();
+    };
+
+    zoomSlider.addEventListener("input", () => {
+      if (!img) return;
+      applyZoom(parseFloat(zoomSlider.value));
+      afterCropChange();
     });
 
-    zoomOutBtn.addEventListener("click", () => {
+    rotateSlider.addEventListener("input", () => {
       if (!img) return;
-      scale *= 0.9;
-      if (isPhotoCropConfirmed) setCropUnconfirmed("zmieniono kadr");
-      drawCircleMask();
+      applyRotation(parseFloat(rotateSlider.value));
+      afterCropChange();
     });
+
+    // Skok o 90° — suwak podąża za przyciskiem, żeby oba pokazywały to samo
+    const nudgeRotation = (delta) => {
+      if (!img) return;
+      let next = parseFloat(rotateSlider.value) + delta;
+      // utrzymaj w zakresie suwaka (-180..180), bo 190° i -170° to ten sam obrót
+      if (next > 180) next -= 360;
+      if (next < -180) next += 360;
+      rotateSlider.value = next;
+      applyRotation(next);
+      afterCropChange();
+    };
+    rotateLeftBtn.addEventListener("click", () => nudgeRotation(-90));
+    rotateRightBtn.addEventListener("click", () => nudgeRotation(90));
+
+    cropResetBtn.addEventListener("click", () => {
+      if (!img) return;
+      const size = canvas.width;
+      scale = baseScale;
+      rotation = 0;
+      centerX = size / 2;
+      centerY = size / 2;
+      zoomSlider.value = 1;
+      rotateSlider.value = 0;
+      afterCropChange();
+    });
+
+    // Kółko myszy nad kadrem też przybliża — suwak pozostaje źródłem prawdy
+    canvas.addEventListener("wheel", (e) => {
+      if (!img) return;
+      e.preventDefault();
+      const step = e.deltaY < 0 ? 0.08 : -0.08;
+      const next = Math.min(4, Math.max(1, parseFloat(zoomSlider.value) + step));
+      zoomSlider.value = next;
+      applyZoom(next);
+      afterCropChange();
+    }, { passive: false });
 
     resetPhotoBtn.addEventListener("click", resetPhoto);
     downloadPhotoBtn.addEventListener("click", downloadPhoto);
