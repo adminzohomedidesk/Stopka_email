@@ -148,9 +148,12 @@
       -webkit-text-fill-color: #2c3e50 !important;
       caret-color: #00bfa5;
     }
-    input:focus, textarea:focus {
-      font-style: normal !important;
-    }
+    /* Telefon to jedyne pole z podpowiedzią — ma być ledwie widoczna,
+       żeby nie wyglądała jak wpisana wartość. */
+    #phone::placeholder { color: #e3e9ee !important; opacity: 1 !important; }
+    #phone::-webkit-input-placeholder { color: #e3e9ee !important; opacity: 1 !important; }
+    #phone::-moz-placeholder { color: #e3e9ee !important; opacity: 1 !important; }
+    #phone:-ms-input-placeholder { color: #e3e9ee !important; opacity: 1 !important; }
     input::placeholder, textarea::placeholder {
       color: #b0bbc5 !important;
       opacity: 1 !important;
@@ -276,11 +279,41 @@
       background-clip: text;
       margin-top: 0;
     }
+    /* Kadr i pionowy suwak obrotu stoją obok siebie */
+    .crop-stage {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+    .crop-rotate-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    /* Suwak obrotu to zwykły poziomy input obrócony o 90° — dzięki temu
+       wygląda i zachowuje się identycznie jak suwak powiększenia,
+       bez walki z różnym wsparciem pionowych range'ów w przeglądarkach. */
+    .crop-rotate-track {
+      height: 240px;
+      width: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .crop-slider-v {
+      width: 240px;
+      flex: none;
+      transform: rotate(-90deg);
+    }
     .canvas-wrapper {
       position: relative;
       width: 300px;
       height: 300px;
-      margin: 1rem auto;
+      margin: 0;
+      flex: none;
       border: 2px dashed var(--border-color);
       border-radius: 12px;
       overflow: hidden;
@@ -591,26 +624,30 @@
             <input type="file" id="photoInput" accept="image/*" style="display: none;" />
             <span id="fileNameDisplay" class="hint" style="margin-left: 0.75rem;">Nie wybrano pliku</span>
           </div>
-          <div class="canvas-wrapper">
-            <canvas id="photoCanvas"></canvas>
+          <div class="crop-stage">
+            <div class="canvas-wrapper">
+              <canvas id="photoCanvas"></canvas>
+            </div>
+            <div class="crop-rotate-col">
+              <label class="crop-label" for="rotateSlider" style="flex: none;">Obrót</label>
+              <div class="crop-rotate-track">
+                <input type="range" class="crop-slider crop-slider-v" id="rotateSlider" min="-180" max="180" step="1" value="0" disabled
+                       aria-label="Obrót zdjęcia w stopniach" />
+              </div>
+              <span class="crop-value" id="rotateValue" style="flex: none; text-align: center;">0°</span>
+            </div>
           </div>
           <div class="crop-controls">
             <div class="crop-row">
               <label class="crop-label" for="zoomSlider">Powiększenie</label>
-              <input type="range" class="crop-slider" id="zoomSlider" min="1" max="4" step="0.01" value="1" disabled
-                     aria-label="Powiększenie zdjęcia" />
+              <input type="range" class="crop-slider" id="zoomSlider" min="0.3" max="4" step="0.01" value="1" disabled
+                     aria-label="Powiększenie i pomniejszenie zdjęcia" />
               <span class="crop-value" id="zoomValue">100%</span>
-            </div>
-            <div class="crop-row">
-              <label class="crop-label" for="rotateSlider">Obrót</label>
-              <input type="range" class="crop-slider" id="rotateSlider" min="-180" max="180" step="1" value="0" disabled
-                     aria-label="Obrót zdjęcia w stopniach" />
-              <span class="crop-value" id="rotateValue">0°</span>
             </div>
             <div class="crop-row" style="justify-content: flex-end;">
               <button type="button" class="crop-btn" id="rotateLeft" title="Obróć w lewo o 90°" disabled>↺ 90°</button>
               <button type="button" class="crop-btn" id="rotateRight" title="Obróć w prawo o 90°" disabled>↻ 90°</button>
-              <button type="button" class="crop-btn" id="cropReset" title="Wyśrodkuj i wyzeruj obrót" disabled>Wyśrodkuj</button>
+              <button type="button" class="crop-btn" id="cropReset" title="Przywróć kadr sprzed zmian: wyśrodkuj, 100%, bez obrotu (zdjęcie zostaje)" disabled>Reset</button>
             </div>
           </div>
           <div class="image-actions">
@@ -689,28 +726,28 @@
           </label>
           <label id="customGreetingWrapper" class="hidden-input">
             Własne pożegnanie
-            <input id="customGreeting" placeholder="np. Z wyrazami szacunku" />
+            <input id="customGreeting" />
             <div class="hint">Generator doda przecinek po tej frazie automatycznie.</div>
           </label>
           <label>
             Imię i nazwisko <span style="color: #d32f2f;">*</span>
-            <input id="fullName" placeholder="przedstaw się" style="font-style: italic;" required />
+            <input id="fullName" required />
           </label>
           <label>
             Stanowisko
-            <input id="role" placeholder="Business Development Manager/PreSales/Inne" style="font-style: italic;" />
+            <input id="role" />
           </label>
           <label>
             Telefon
-            <input id="phone" placeholder="+48 ..." style="font-style: italic;" />
+            <input id="phone" placeholder="+48 ..." />
           </label>
           <label>
             E-mail <span style="color: #d32f2f;">*</span>
-            <input id="email" placeholder="imię.nazwisko@medidesk.com" style="font-style: italic;" required />
+            <input id="email" required />
           </label>
           <label>
             LinkedIn (opcjonalnie)
-            <input id="linkedin" placeholder="https://www.linkedin.com/in/..." style="font-style: italic;" />
+            <input id="linkedin" />
           </label>
           <!-- Wybór marki — ustala dane spółki, kolory, bannery w Kroku 3 i listę linków niżej -->
           <label style="margin-bottom: 0.5rem;">
@@ -903,7 +940,6 @@
         city: "01-570 Warszawa",
         phoneText: "22 250 08 50",
         phoneHref: "+48222500850",
-        emailPlaceholder: "imię.nazwisko@medidesk.com",
         siteLinks: [
           { id: "linkMedidesk", label: "medidesk.com", href: "https://medidesk.pl/", title: "medidesk.pl", checked: true },
           { id: "linkEdu", label: "medidesk.edu.pl", href: "https://medidesk.edu.pl/", title: "medidesk.edu.pl", checked: false },
@@ -935,7 +971,6 @@
         city: "01-570 Warszawa",
         phoneText: "22 250 08 50",
         phoneHref: "+48222500850",
-        emailPlaceholder: "imię.nazwisko@vetidesk.com",
         siteLinks: [
           { id: "linkVetidesk", label: "vetidesk.com", href: "https://vetidesk.com/", title: "vetidesk.com", checked: true },
         ],
@@ -1041,8 +1076,6 @@
       paintBrandCards();
       renderSiteLinks();
 
-      const emailInput = document.getElementById("email");
-      if (emailInput) emailInput.placeholder = b.emailPlaceholder;
       if (headerLogo) { headerLogo.src = b.logo; headerLogo.alt = b.name; }
       if (headerTitle) headerTitle.textContent = `Generator stopki ${b.name}`;
       document.title = `Generator stopki ${b.name}`;
@@ -2376,7 +2409,7 @@ ${linkedin ? `<a href="${linkedin}" title="${linkedin}" style="text-decoration:n
       if (!img) return;
       e.preventDefault();
       const step = e.deltaY < 0 ? 0.08 : -0.08;
-      const next = Math.min(4, Math.max(1, parseFloat(zoomSlider.value) + step));
+      const next = Math.min(4, Math.max(0.3, parseFloat(zoomSlider.value) + step));
       zoomSlider.value = next;
       applyZoom(next);
       afterCropChange();
