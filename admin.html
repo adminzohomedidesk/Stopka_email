@@ -277,7 +277,8 @@
 <div id="pinScreen">
   <h1>Panel administracyjny</h1>
   <p>Wprowadź PIN aby zarządzać bannerami stopki email.</p>
-  <input id="pinInput" type="password" inputmode="numeric" maxlength="8" placeholder="••••" autocomplete="off" />
+  <input id="pinInput" type="password" inputmode="numeric" maxlength="8" placeholder="••••"
+         name="pin-bez-autofill" autocomplete="new-password" autocorrect="off" spellcheck="false" />
   <div id="pinError"></div>
   <button class="btn-primary" id="pinBtn">Wejdź</button>
 </div>
@@ -326,17 +327,36 @@
   const pinBtn = document.getElementById("pinBtn");
   const pinError = document.getElementById("pinError");
 
+  // Panel raz zbudowany nie jest przebudowywany przy ponownym podaniu PIN-u —
+  // dzięki temu wybrany plik i wpisany link nie przepadają po błędnym PIN-ie.
+  let panelReady = false;
+
   const checkPin = () => {
     // PIN walidowany serwerowo przy zapisie
-    if (!pinInput.value) {
+    const podany = pinInput.value.trim();
+    if (!podany) {
       pinError.textContent = "Wprowadź PIN.";
       return;
     }
-    userPin = pinInput.value;
+    userPin = podany;
+    pinError.textContent = "";
     document.getElementById("pinScreen").style.display = "none";
     document.getElementById("adminPanel").style.display = "block";
-    renderTabs();
-    loadConfig();
+    if (!panelReady) {
+      panelReady = true;
+      renderTabs();
+      loadConfig();
+    }
+  };
+
+  // Serwer odrzucił PIN — wracamy na ekran logowania, ale formularz zostaje wypełniony.
+  const zapytajOPinPonownie = (komunikat) => {
+    userPin = "";
+    pinInput.value = "";
+    pinError.textContent = komunikat;
+    document.getElementById("adminPanel").style.display = "none";
+    document.getElementById("pinScreen").style.display = "";
+    pinInput.focus();
   };
   pinBtn.addEventListener("click", checkPin);
   pinInput.addEventListener("keydown", e => { if (e.key === "Enter") checkPin(); });
@@ -522,7 +542,11 @@
           body: JSON.stringify(payload)
         });
 
-        if (r.status === 401) throw new Error("Nieprawidłowy PIN — odśwież stronę i wpisz poprawny.");
+        if (r.status === 401) {
+          const e = new Error("Nieprawidłowy PIN — wpisz go ponownie i kliknij Zapisz jeszcze raz.");
+          e.zlyPin = true;
+          throw e;
+        }
         if (!r.ok) throw new Error("Błąd serwera (" + r.status + ")");
 
         q("current").textContent = value;
@@ -543,6 +567,7 @@
       } catch (err) {
         statusEl.className = "status-msg err";
         statusEl.textContent = "Błąd: " + err.message;
+        if (err.zlyPin) zapytajOPinPonownie("Nieprawidłowy PIN — wpisz go ręcznie.");
       } finally {
         saveBtn.disabled = false;
       }
